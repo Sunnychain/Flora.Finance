@@ -1,4 +1,10 @@
-# Substrate Node Template
+# FLORA.NETWORK
+
+The Flora Network seeks new forms of interaction for the preservation of the planet, creating a synergy between the blockchain and the forests and its most active drivers.
+We see the future of this project, giving nature sustainable ways to regenerate with a protected ecosystem and communities.
+We want to encourage the use of green products in the Blockchain, with the objective of contributing solidly to the consistent regeneration of destroyed ecosystems and accelerating the goals for the Carbon-Neutral (2050) plan. Thus, we can empower several Nodes around the world, so that, in a decentralized way, autonomous communities that have the same green commitment.
+
+### Substrate Node Template
 
 [![Try on playground](https://img.shields.io/badge/Playground-Node_Template-brightgreen?logo=Parity%20Substrate)](https://playground.substrate.dev/?deploy=node-template) [![Matrix](https://img.shields.io/matrix/substrate-technical:matrix.org)](https://matrix.to/#/#substrate-technical:matrix.org)
 

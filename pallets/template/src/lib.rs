@@ -14,16 +14,36 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+use codec::{Encode, Decode};
+
+use sp_runtime::{
+	RuntimeDebug, traits::{
+		AtLeast32BitUnsigned, Zero, Saturating, CheckedAdd, CheckedSub,
+	},
+};	
+
+
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default)]
+pub struct MetaData<AccountId, Balance> {
+	issuance: Balance,
+	minter: AccountId,
+	burner: AccountId,
+}
+
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
-
+	use super::*;
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		// The type used to store balances.
+		type Balance: Member + Parameter + AtLeast32BitUnsigned + Default + Copy;
 	}
 
 	#[pallet::pallet]
@@ -38,6 +58,36 @@ pub mod pallet {
 	// https://substrate.dev/docs/en/knowledgebase/runtime/storage#declaring-storage-items
 	pub type Something<T> = StorageValue<_, u32>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn meta_data)]
+	pub(super) type MetaDataStore<T: Config> = StorageValue<_, MetaData<T::AccountId, T::Balance>, ValueQuery>;
+
+
+		// Declare `admin` as type `T::AccountId`.
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub admin: T::AccountId,
+	}
+	// Give it a default value.
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self {
+				admin: Default::default(),
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+    impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+        fn build(&self) {
+            MetaDataStore::<T>::put(MetaData {
+                issuance: Zero::zero(),
+                minter: self.admin.clone(),
+                burner: self.admin.clone(),
+            });
+        }
+    }
 	// Pallets use events to inform users when important changes are made.
 	// https://substrate.dev/docs/en/knowledgebase/runtime/events
 	#[pallet::event]

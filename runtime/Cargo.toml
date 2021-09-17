@@ -36,6 +36,11 @@ default-features = false
 path = '../pallets/auctions'
 version = '3.0.0-monthly-2021-09+1'
 
+[dependencies.pallet-crowdloan-rewards]
+default-features = false
+path = '../pallets/crowdloan-rewards'
+version = '3.0.0-monthly-2021-09+1'
+
 [build-dependencies.substrate-wasm-builder]
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'

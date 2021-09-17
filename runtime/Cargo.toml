@@ -31,6 +31,11 @@ default-features = false
 path = '../pallets/nfts'
 version = '3.0.0-monthly-2021-09+1'
 
+[dependencies.kodadot-auction]
+default-features = false
+path = '../pallets/auctions'
+version = '3.0.0-monthly-2021-09+1'
+
 [build-dependencies.substrate-wasm-builder]
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
@@ -212,6 +217,10 @@ default-features = false
 git = 'https://github.com/open-web3-stack/open-runtime-module-library.git'
 branch = "master"
 
+[dependencies.orml-auction]
+default-features = false
+git = 'https://github.com/open-web3-stack/open-runtime-module-library.git'
+branch = "master"
 
 
 [features]
@@ -256,4 +265,6 @@ std = [
     'sp-version/std',
 	"orml-nft/std",
     "kodadot-nft/std",
+    "kodadot-auction/std",
+    'orml-auction/std',
 ]

@@ -2593,6 +2593,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "kodadot-auction"
+version = "3.0.0-monthly-2021-09+1"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "orml-auction",
+ "orml-nft",
+ "orml-traits",
+ "pallet-balances",
+ "parity-scale-codec",
+ "serde",
+ "sp-core 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-io 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-runtime 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-std 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+]
+
+[[package]]
 name = "kodadot-nft"
 version = "3.0.0-monthly-2021-09+1"
 dependencies = [
@@ -3737,8 +3756,10 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "kodadot-auction",
  "kodadot-nft",
  "lockable-currency",
+ "orml-auction",
  "orml-nft",
  "orml-traits",
  "pallet-aura",
@@ -3920,9 +3941,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28988d872ab76095a6e6ac88d99b54fd267702734fd7ffe610ca27f533ddb95a"
 
 [[package]]
+name = "orml-auction"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library.git?branch=master#65f1734ee8438e1b667a2e8148f6f68c717ad2b2"
+dependencies = [
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.9)",
+ "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.9)",
+ "orml-traits",
+ "parity-scale-codec",
+ "serde",
+ "sp-runtime 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.9)",
+ "sp-std 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.9)",
+]
+
+[[package]]
 name = "orml-nft"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library.git?branch=master#de7ff2750bdc3f42f76591f1b71cdfec34587992"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library.git?branch=master#65f1734ee8438e1b667a2e8148f6f68c717ad2b2"
 dependencies = [
  "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.9)",
  "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.9)",
@@ -3935,7 +3970,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library.git?branch=master#de7ff2750bdc3f42f76591f1b71cdfec34587992"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library.git?branch=master#65f1734ee8438e1b667a2e8148f6f68c717ad2b2"
 dependencies = [
  "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.9)",
  "impl-trait-for-tuples",
@@ -3952,7 +3987,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library.git?branch=master#de7ff2750bdc3f42f76591f1b71cdfec34587992"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library.git?branch=master#65f1734ee8438e1b667a2e8148f6f68c717ad2b2"
 dependencies = [
  "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.9)",
  "parity-scale-codec",
@@ -7854,7 +7889,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f559b464de2e2bdabcac6a210d12e9b5a5973c251e102c44c585c71d51bd78e"
 dependencies = [
  "cfg-if 1.0.0",
- "rand 0.8.4",
+ "rand 0.3.23",
  "static_assertions",
 ]
 

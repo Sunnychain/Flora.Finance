@@ -26,6 +26,11 @@ default-features = false
 path = '../pallets/lockable-currency'
 version = '3.0.0-monthly-2021-09+1'
 
+[dependencies.kodadot-nft]
+default-features = false
+path = '../pallets/nfts'
+version = '3.0.0-monthly-2021-09+1'
+
 [build-dependencies.substrate-wasm-builder]
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
@@ -193,6 +198,22 @@ git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
 
+[dependencies.serde]
+optional = true
+version = '1.0.124'
+
+[dependencies.orml-nft]
+default-features = false
+git = 'https://github.com/open-web3-stack/open-runtime-module-library.git'
+branch = "master"
+
+[dependencies.orml-traits]
+default-features = false
+git = 'https://github.com/open-web3-stack/open-runtime-module-library.git'
+branch = "master"
+
+
+
 [features]
 default = ['std']
 runtime-benchmarks = [
@@ -207,6 +228,7 @@ runtime-benchmarks = [
     'sp-runtime/runtime-benchmarks',
 ]
 std = [
+    "serde",
     'codec/std',
     'frame-executive/std',
     'frame-support/std',
@@ -232,4 +254,6 @@ std = [
     'sp-std/std',
     'sp-transaction-pool/std',
     'sp-version/std',
+	"orml-nft/std",
+    "kodadot-nft/std",
 ]

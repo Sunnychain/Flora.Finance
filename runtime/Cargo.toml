@@ -227,6 +227,9 @@ default-features = false
 git = 'https://github.com/open-web3-stack/open-runtime-module-library.git'
 branch = "master"
 
+[dependencies]
+primitives = { default-features = false, path = "../primitives" }
+
 
 [features]
 default = ['std']

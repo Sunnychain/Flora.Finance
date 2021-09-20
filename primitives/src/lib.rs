@@ -1,73 +1,75 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(clippy::upper_case_acronyms)]
 
 use codec::{Decode, Encode};
+use sp_runtime::{
+	generic,
+	traits::{BlakeTwo256, IdentifyAccount, Verify},
+	MultiSignature, OpaqueExtrinsic, RuntimeDebug,
+};
+use sp_std::{
+	convert::{Into, TryFrom, TryInto},
+	prelude::*,
+};
 
-use primitive_types::U256;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-
-use frame_support::sp_runtime::FixedU128;
 
 /// An index to a block.
 pub type BlockNumber = u32;
 
+/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
+pub type Signature = MultiSignature;
+
+/// Some way of identifying an account on the chain. We intentionally make it equivalent
+/// to the public key of our transaction signing scheme.
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+
+/// The type for looking up accounts. We don't expect more than 4 billion of them.
+pub type AccountIndex = u32;
+
+/// Balance of an account.
+pub type Balance = u128;
+
 /// Type used for expressing timestamp.
 pub type Moment = u64;
 
-/// Core asset id
-pub const CORE_ASSET_ID: AssetId = 0;
+/// Index of a transaction in the chain.
+pub type Index = u32;
 
-/// Type for storing the id of an asset.
-pub type AssetId = u32;
+/// A hash of some data used by the chain.
+pub type Hash = sp_core::H256;
 
-/// Type for storing the balance of an account.
-pub type Balance = u128;
+/// A timestamp: milliseconds since the unix epoch.
+/// `u64` is enough to represent a duration of half a billion years, when the
+/// time scale is milliseconds.
+pub type Timestamp = u64;
+
+/// Digest item type.
+pub type DigestItem = generic::DigestItem<Hash>;
+/// Header type.
+pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+/// Block type.
+pub type Block = generic::Block<Header, OpaqueExtrinsic>;
+/// Block ID.
+pub type BlockId = generic::BlockId<Block>;
 
 /// Signed version of Balance
 pub type Amount = i128;
 
-/// Price
-pub type Price = FixedU128;
+/// Token ID
+pub type TokenId = u64;
 
-/// Max fraction of pool to buy in single transaction
-pub const MAX_OUT_RATIO: u128 = 3;
+/// Index of token created
+pub type TokenIndex = u32;
 
-/// Max fraction of pool to sell in single transaction
-pub const MAX_IN_RATIO: u128 = 3;
+// Index of pool created
+pub type PoolIndex = u32;
 
-/// Trading limit
-pub const MIN_TRADING_LIMIT: Balance = 1000;
-
-/// Minimum pool liquidity
-pub const MIN_POOL_LIQUIDITY: Balance = 1000;
-
-/// Scaled Unsigned of Balance
-pub type HighPrecisionBalance = U256;
-pub type LowPrecisionBalance = u128;
-
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Debug, Encode, Decode, Clone, Copy, PartialEq, Eq)]
-pub enum IntentionType {
-	SELL,
-	BUY,
+pub enum TokenSymbol {
+	W3G = 0,
+	DOT = 1,
+	ACA = 2,
+	AUSD = 3,
 }
-
-impl Default for IntentionType {
-	fn default() -> IntentionType {
-		IntentionType::SELL
-	}
-}
-
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Encode, Decode, Default, Clone, PartialEq)]
-pub struct ExchangeIntention<AccountId, Balance, IntentionID> {
-	pub who: AccountId,
-	pub amount_in: Balance,
-	pub amount_out: Balance,
-	pub trade_limit: Balance,
-	pub discount: bool,
-	pub sell_or_buy: IntentionType,
-	pub intention_id: IntentionID,
-}
-

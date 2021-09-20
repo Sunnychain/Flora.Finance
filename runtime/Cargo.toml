@@ -26,7 +26,7 @@ default-features = false
 path = '../pallets/lockable-currency'
 version = '3.0.0-monthly-2021-09+1'
 
-[dependencies.kodadot-nft]
+[dependencies.pallet-nft]
 default-features = false
 path = '../pallets/nfts'
 version = '3.0.0-monthly-2021-09+1'
@@ -272,7 +272,7 @@ std = [
     'sp-transaction-pool/std',
     'sp-version/std',
 	"orml-nft/std",
-    "kodadot-nft/std",
+    "pallet-nft/std",
     "kodadot-auction/std",
     'orml-auction/std',
 ]

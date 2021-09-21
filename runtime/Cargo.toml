@@ -41,6 +41,13 @@ default-features = false
 path = '../pallets/crowdloan-rewards'
 version = '3.0.0-monthly-2021-09+1'
 
+
+[dependencies.pallet-nft-market]
+default-features = false
+path = '../pallets/nft-market'
+version = '3.0.0-monthly-2021-09+1'
+
+
 [build-dependencies.substrate-wasm-builder]
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
@@ -275,4 +282,5 @@ std = [
     "pallet-nft/std",
     "kodadot-auction/std",
     'orml-auction/std',
+    'pallet-nft-market/std'
 ]

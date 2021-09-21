@@ -4127,6 +4127,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-grandpa 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
  "pallet-nft",
+ "pallet-nft-market",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
  "pallet-template",
@@ -4808,6 +4809,25 @@ dependencies = [
 
 [[package]]
 name = "pallet-nft"
+version = "3.0.0-monthly-2021-09+1"
+dependencies = [
+ "frame-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "orml-nft",
+ "orml-traits",
+ "pallet-balances 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "parity-scale-codec",
+ "primitives",
+ "serde",
+ "sp-core 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-io 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-runtime 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-std 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+]
+
+[[package]]
+name = "pallet-nft-market"
 version = "3.0.0-monthly-2021-09+1"
 dependencies = [
  "frame-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",

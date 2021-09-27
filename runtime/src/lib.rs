@@ -304,6 +304,23 @@ impl pallet_nft::Config for Runtime {
 }
 
 
+// Crowdfunding pallet
+parameter_types! {
+	pub const SubmissionDeposit: u128 = 10;
+	pub const MinContribution: u128 = 10;
+	pub const RetirementPeriod: u32 = 10;
+}
+
+/// Configure the pallet-template in pallets/template.
+impl simple_crowdfund::Config for Runtime {
+	type Event = Event;
+
+	type Currency = Balances;
+	type SubmissionDeposit = SubmissionDeposit;
+	type MinContribution = MinContribution;
+	type RetirementPeriod = RetirementPeriod;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -323,6 +340,7 @@ construct_runtime!(
 		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
 		NftMarket: pallet_nft_market::{Pallet, Call, Storage, Event<T>},
 		TokenNonFungible: pallet_nft::{Pallet, Call, Storage, Event<T>},
+		CrowdFund: simple_crowdfund::{Pallet, Call, Storage, Event<T>},
 		
 
 	}

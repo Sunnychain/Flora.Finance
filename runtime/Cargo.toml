@@ -31,17 +31,6 @@ default-features = false
 path = '../pallets/nfts'
 version = '3.0.0-monthly-2021-09+1'
 
-[dependencies.kodadot-auction]
-default-features = false
-path = '../pallets/auctions'
-version = '3.0.0-monthly-2021-09+1'
-
-[dependencies.pallet-crowdloan-rewards]
-default-features = false
-path = '../pallets/crowdloan-rewards'
-version = '3.0.0-monthly-2021-09+1'
-
-
 [dependencies.pallet-nft-market]
 default-features = false
 path = '../pallets/nft-market'
@@ -280,7 +269,7 @@ std = [
     'sp-version/std',
 	"orml-nft/std",
     "pallet-nft/std",
-    "kodadot-auction/std",
+    
     'orml-auction/std',
     'pallet-nft-market/std'
 ]

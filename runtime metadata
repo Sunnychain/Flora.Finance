@@ -1,0 +1,35 @@
+{
+  "TokenId": "u64",
+  "TokenIndex": "u32",
+  "InstanceId": "u64",
+  "ExchangeId": "u32",
+  "NonFungibleTokenId": "u32",
+  "Collection<AccountId>": {
+    "owner": "AccountId",
+    "nft_type": "NftType",
+    "nft_account": "AccountId",
+    "metadata": "Vec<u8>"
+  },
+  "TokenSymbol": {
+    "_enum": {
+      "W3G": 0,
+      "DOT": 1,
+      "ACA": 2,
+      "AUSD": 3
+    }
+  },
+  "NftType": {
+    "_enum": {
+      "NonFungibleToken": 0,
+      "MultiToken": 1
+    }
+  },
+  "CurrencyId": {
+    "_enum": {
+      "Token": "TokenSymbol"
+    }
+  },
+  "CurrencyIdOf": "CurrencyId",
+  "CollectionId": "u64",
+  "AssetId": "64"
+}

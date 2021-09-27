@@ -18,6 +18,16 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature,
 };
+/// Constant values used within the runtime.
+mod constants;
+pub use constants::{currency::*, time::*};
+
+pub use primitives::{
+	AccountId, AccountIndex, Amount, Balance, BlockNumber, CurrencyId, Hash, Index, Moment,
+	Signature, TokenSymbol,
+};
+
+
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -31,7 +41,7 @@ pub use frame_support::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		IdentityFee, Weight,
 	},
-	StorageValue,
+	StorageValue,PalletId,
 };
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -45,24 +55,7 @@ pub use sp_runtime::{Perbill, Permill};
 pub use pallet_template;
 
 
-/// An index to a block.
-pub type BlockNumber = u32;
 
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Index of a transaction in the chain.
-pub type Index = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -268,20 +261,48 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
-/// Configure the pallet-template in pallets/template.
-impl pallet_template::Config for Runtime {
-	type Event = Event;
-	type Balance = Balances;
+
+parameter_types! {
+	pub const CreateTokenDeposit: Balance = 500 * MILLICENTS;
+	pub const CreatePoolDeposit: Balance = 500 * MILLICENTS;
+	pub const CreateCollectionDeposit: Balance = 500 * MILLICENTS;
+	pub const CreateCurrencyInstanceDeposit: Balance = 500 * MILLICENTS;
 }
 
-impl orml_nft::Config for Runtime {
-	type ClassId = u32;
-	type TokenId = u32;
-	type ClassData = ();
-	type TokenData = pallet_kitties::Kitty;
-	type MaxClassMetadata = MaxClassMetadata;
-	type MaxTokenMetadata = MaxTokenMetadata;
+parameter_types! {
+	pub const TokenFungiblePalletId: PalletId = PalletId(*b"w3g/tofm");
+	pub const TokenNonFungiblePalletId: PalletId = PalletId(*b"w3g/tonf");
+	pub const TokenMultiPalletId: PalletId = PalletId(*b"w3g/tomm");
+	pub const WrapCurrencyPalletId: PalletId = PalletId(*b"w3g/wrap");
+	pub const PoolPalletId: PalletId = PalletId(*b"w3g/pool");
+	pub const NftPoolPalletId: PalletId = PalletId(*b"w3g/nftp");
+	pub ZeroAccountId: AccountId = AccountId::from([0u8; 32]);
+	pub const StringLimit: u32 = 50;
 }
+
+/// Configure the pallet-template in pallets/template.
+impl pallet_template::Config  for Runtime {
+	type Event = Event;
+	
+	
+}
+
+
+impl pallet_nft_market::Config for Runtime {
+	type Event = Event;
+	type CreateCollectionDeposit = CreateCollectionDeposit;
+	type Currency = Balances;
+}
+
+impl pallet_nft::Config for Runtime {
+	type Event = Event;
+	type PalletId = TokenNonFungiblePalletId;
+	type NonFungibleTokenId = u32;
+	type StringLimit = StringLimit;
+	type CreateTokenDeposit = CreateTokenDeposit;
+	type Currency = Balances;
+}
+
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -300,8 +321,9 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		// Include the custom logic from the pallet-template in the runtime.
 		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
-		NFT: kodadot_nft::{Pallet, Call, Event<T>},
-		OrmlNFT: orml_nft::{Pallet, Storage, Config<T>},
+		NftMarket: pallet_nft_market::{Pallet, Call, Storage, Event<T>},
+		TokenNonFungible: pallet_nft::{Pallet, Call, Storage, Event<T>},
+		
 
 	}
 );

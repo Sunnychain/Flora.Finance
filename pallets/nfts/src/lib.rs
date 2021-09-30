@@ -69,8 +69,10 @@ pub mod pallet {
 
 
 	#[pallet::storage]
-	pub(super) type IsLocked<T: Config> =
-		StorageMap<_, Blake2_128Concat, TokenId,u32,ValueQuery>;
+	pub type IsLocked<T: Config> =
+		StorageDoubleMap<_, Blake2_128Concat, T::NonFungibleTokenId,
+		Blake2_128Concat, TokenId,
+		u32,ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn owner_of)]
@@ -435,7 +437,7 @@ impl<T: Config> Pallet<T> {
 		Balances::<T>::insert(id, to, new_balance);
 		Owners::<T>::insert(id, token_id, to);
 
-		IsLocked::<T>::insert(token_id,0);
+		IsLocked::<T>::insert(id,token_id,0);
 
 		Self::deposit_event(Event::Transfer(
 			id.clone(),

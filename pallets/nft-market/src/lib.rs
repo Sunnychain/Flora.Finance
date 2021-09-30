@@ -41,11 +41,13 @@ pub struct Collection<AccountId> {
 }
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
-pub struct Sale<AccountId,CollectionId,TokenId,Balance>{
+pub struct Sale<AccountId,CollectionId,NonFungibleTokenId,TokenId,Balance>{
 	//Product Owner
 	pub owner:AccountId,
 	//Collection Index
 	pub collection:CollectionId,
+	//NFT Index
+	pub nft_id:NonFungibleTokenId,
 	//Token Index
 	pub token: TokenId,
 	//Product Price
@@ -86,7 +88,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub(super) type SalesInfo<T: Config> =
-		StorageMap<_, Blake2_128Concat, SalesId, Sale<T::AccountId,CollectionId,TokenId,Balance>>;
+		StorageMap<_, Blake2_128Concat, SalesId, Sale<T::AccountId,CollectionId,T::NonFungibleTokenId,TokenId,Balance>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn next_sales_id)]
@@ -113,6 +115,7 @@ pub mod pallet {
 		NoPermission,
 		CannotDestroyCollection,
 		NoAvaiableSalesId,
+		AssetIsLocked,
 	}
 
 	#[pallet::hooks]
@@ -260,8 +263,17 @@ impl<T: Config> Pallet<T> {
 		price: Balance,
 
 	) -> DispatchResult {
-		
+
+		//ensure collection exists
+		ensure!(Collections::<T>::contains_key(collection_id),Error::<T>::CollectionNotFound);
+
+		//ensure origin is owner of token
 		ensure!(pallet_nft::Owners::<T>::get(non_fungible_id,token_id)==who.clone(),Error::<T>::NoPermission);
+
+		//ensure token is not locked
+		ensure!(pallet_nft::IsLocked::<T>::get(non_fungible_id,token_id)==0,Error::<T>::AssetIsLocked);
+
+
 
 		let sales_id =
 			NextSalesId::<T>::try_mutate(|id| -> Result<SalesId, DispatchError> {
@@ -276,12 +288,20 @@ impl<T: Config> Pallet<T> {
 			let sale = Sale {
 				owner: who.clone(),
 				collection:collection_id,
+				nft_id:non_fungible_id,
 				token:token_id,
 				price:price
 			};
 
+			//Lock nft
 
+			pallet_nft::IsLocked::<T>::try_mutate(non_fungible_id,token_id, |lock_flag|->DispatchResult{
+				*lock_flag=lock_flag.checked_add(1).ok_or(Error::<T>::NumOverflow)?;
+				Ok(())
 
+			})?;
+
+			
 			SalesInfo::<T>::insert(sales_id, sale);
 			Self::deposit_event(Event::SalesAdded(who.clone(),collection_id,sales_id));
 			

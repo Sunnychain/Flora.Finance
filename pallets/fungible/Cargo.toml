@@ -1,9 +1,8 @@
 [package]
-name = "pallet-nft-market"
+name = "pallet-token-fungible"
 version = "3.0.0-monthly-2021-09+1"
 authors = ["Web3Games Developers"]
 edition = "2018"
-
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -67,16 +66,10 @@ version = '4.0.0-dev'
 optional = true
 version = '1.0.124'
 
-[dependencies.orml-nft]
-default-features = false
-git = 'https://github.com/open-web3-stack/open-runtime-module-library.git'
-branch = "master"
 
 
 [dependencies]
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master", default-features = false }
 primitives = { default-features = false, path = "../../primitives" }
-pallet-nft = { default-features = false, path = "../nfts" }
 
 
 
@@ -84,16 +77,15 @@ pallet-nft = { default-features = false, path = "../nfts" }
 default = ['std']
 runtime-benchmarks = ['frame-benchmarking']
 std = [
-    "serde",
-    'codec/std',
-    'frame-support/std',
-    'frame-system/std',
-    'frame-benchmarking/std',
+  "serde/std",
+    "codec/std",
+    "frame-support/std",
+    "frame-system/std",
+    "sp-std/std",
+    "sp-io/std",
     "sp-runtime/std",
-    'sp-std/std',
-    'pallet-balances/std',
-    "orml-traits/std",
-	"orml-nft/std",
+    "primitives/std",
+    "sp-core/std",
     
 ]
 try-runtime = ['frame-support/try-runtime']

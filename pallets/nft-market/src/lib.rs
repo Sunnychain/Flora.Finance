@@ -7,15 +7,19 @@ use frame_support::{
 	traits::{Currency, Get, ReservableCurrency},
 };
 use primitives::{Balance, TokenId};
-use sp_runtime::{traits::One, RuntimeDebug};
+use pallet_nft;
+
+use sp_runtime::{traits::{One,AtLeast32BitUnsigned}, RuntimeDebug};
 use sp_std::prelude::*;
 
 pub use pallet::*;
 // Tests disabled
 type BalanceOf<T> =
-	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	<<T as pallet_nft::Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 pub type CollectionId = u64;
+
+pub type SalesId = u64;
 
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum NftType {
@@ -36,6 +40,20 @@ pub struct Collection<AccountId> {
 	pub metadata: Vec<u8>,
 }
 
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
+pub struct Sale<AccountId,CollectionId,TokenId,Balance>{
+	//Product Owner
+	pub owner:AccountId,
+	//Collection Index
+	pub collection:CollectionId,
+	//Token Index
+	pub token: TokenId,
+	//Product Price
+	pub price : Balance,
+
+}
+
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -43,14 +61,15 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_nft::Config{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The minimum balance to create collection
 		#[pallet::constant]
 		type CreateCollectionDeposit: Get<BalanceOf<Self>>;
 
-		type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
+		
+		
 	}
 
 	#[pallet::pallet]
@@ -65,12 +84,21 @@ pub mod pallet {
 	#[pallet::getter(fn next_collection_id)]
 	pub(super) type NextCollectionId<T: Config> = StorageValue<_, CollectionId, ValueQuery>;
 
+	#[pallet::storage]
+	pub(super) type SalesInfo<T: Config> =
+		StorageMap<_, Blake2_128Concat, SalesId, Sale<T::AccountId,CollectionId,TokenId,Balance>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn next_sales_id)]
+	pub(super) type NextSalesId<T: Config> = StorageValue<_, SalesId, ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		CollectionCreated(CollectionId, T::AccountId),
 		CollectionDestroyed(CollectionId, T::AccountId),
+		SalesAdded(T::AccountId,CollectionId,SalesId),
 	}
 
 	// Errors inform users that something went wrong.
@@ -84,6 +112,7 @@ pub mod pallet {
 		InvalidQuantity,
 		NoPermission,
 		CannotDestroyCollection,
+		NoAvaiableSalesId,
 	}
 
 	#[pallet::hooks]
@@ -95,6 +124,7 @@ pub mod pallet {
 		pub fn create_collection(
 			origin: OriginFor<T>,
 			nft_type: NftType,
+
 			nft_account: T::AccountId,
 			metadata: Vec<u8>,
 		) -> DispatchResult {
@@ -108,13 +138,16 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn add_sale(
 			origin: OriginFor<T>,
+			non_fungible_id : T::NonFungibleTokenId,
 			collection_id: CollectionId,
 			token_id: TokenId,
 			price: Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			Self::do_add_sale(&who, collection_id, token_id, price)?;
+			Self::do_add_sale(&who,non_fungible_id,collection_id, token_id, price)?;
+
+			
 
 			Ok(().into())
 		}
@@ -212,6 +245,7 @@ impl<T: Config> Pallet<T> {
 			metadata,
 		};
 
+	
 		Collections::<T>::insert(collection_id, collection);
 
 		Self::deposit_event(Event::CollectionCreated(collection_id, who.clone()));
@@ -219,11 +253,38 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn do_add_sale(
-		_who: &T::AccountId,
-		_collection_id: CollectionId,
-		_token_id: TokenId,
-		_price: Balance,
+		who: &T::AccountId,
+		non_fungible_id : T::NonFungibleTokenId,
+		collection_id: CollectionId,
+		token_id: TokenId,
+		price: Balance,
+
 	) -> DispatchResult {
+		
+		ensure!(pallet_nft::Owners::<T>::get(non_fungible_id,token_id)==who.clone(),Error::<T>::NoPermission);
+
+		let sales_id =
+			NextSalesId::<T>::try_mutate(|id| -> Result<SalesId, DispatchError> {
+				let current_id = *id;
+				*id = id
+					.checked_add(One::one())
+					.ok_or(Error::<T>::NoAvaiableSalesId)?;
+				Ok(current_id)
+			})?;
+			
+			
+			let sale = Sale {
+				owner: who.clone(),
+				collection:collection_id,
+				token:token_id,
+				price:price
+			};
+
+
+
+			SalesInfo::<T>::insert(sales_id, sale);
+			Self::deposit_event(Event::SalesAdded(who.clone(),collection_id,sales_id));
+			
 		Ok(())
 	}
 

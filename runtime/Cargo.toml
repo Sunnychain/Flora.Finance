@@ -21,6 +21,12 @@ default-features = false
 path = '../pallets/simple-crowdfund'
 version = '3.0.0-monthly-2021-09+1'
 
+
+[dependencies.pallet-token-fungible]
+default-features = false
+path = '../pallets/fungible'
+version = '3.0.0-monthly-2021-09+1'
+
 [dependencies.lockable-currency]
 default-features = false
 path = '../pallets/lockable-currency'
@@ -271,5 +277,7 @@ std = [
     "pallet-nft/std",
     
     'orml-auction/std',
-    'pallet-nft-market/std'
+    'pallet-nft-market/std',
+    'simple-crowdfund/std',
+    
 ]

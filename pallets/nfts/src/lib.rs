@@ -1,3 +1,4 @@
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode, MaxEncodedLen};
@@ -40,7 +41,7 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 
 		/// Identifier for the class of token.
-		type NonFungibleTokenId: Member + Parameter + AtLeast32BitUnsigned + Default + Copy + MaxEncodedLen;
+		type NonFungibleTokenId: Member  + Parameter + AtLeast32BitUnsigned + Default + Copy + MaxEncodedLen;
 
 		/// The maximum length of base uri stored on-chain.
 		#[pallet::constant]
@@ -65,9 +66,15 @@ pub mod pallet {
 	#[pallet::getter(fn next_token_id)]
 	pub(super) type NextTokenId<T: Config> = StorageValue<_, T::NonFungibleTokenId, ValueQuery>;
 
+
+
+	#[pallet::storage]
+	pub(super) type IsLocked<T: Config> =
+		StorageMap<_, Blake2_128Concat, TokenId,u32,ValueQuery>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn owner_of)]
-	pub(super) type Owners<T: Config> = StorageDoubleMap<
+	pub type Owners<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		T::NonFungibleTokenId,
@@ -353,6 +360,8 @@ impl<T: Config> Pallet<T> {
 
 		Tokens::<T>::insert(id, token);
 
+		
+
 		Self::deposit_event(Event::TokenCreated(id, who.clone()));
 
 		Ok(id)
@@ -425,6 +434,8 @@ impl<T: Config> Pallet<T> {
 
 		Balances::<T>::insert(id, to, new_balance);
 		Owners::<T>::insert(id, token_id, to);
+
+		IsLocked::<T>::insert(token_id,0);
 
 		Self::deposit_event(Event::Transfer(
 			id.clone(),

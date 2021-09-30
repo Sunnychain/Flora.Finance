@@ -3741,6 +3741,7 @@ dependencies = [
  "pallet-sudo",
  "pallet-template",
  "pallet-timestamp",
+ "pallet-token-fungible",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
@@ -4073,6 +4074,7 @@ dependencies = [
  "orml-nft",
  "orml-traits",
  "pallet-balances",
+ "pallet-nft",
  "parity-scale-codec",
  "primitives",
  "serde",
@@ -4158,6 +4160,23 @@ dependencies = [
  "sp-runtime 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
  "sp-std 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
  "sp-timestamp",
+]
+
+[[package]]
+name = "pallet-token-fungible"
+version = "3.0.0-monthly-2021-09+1"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "pallet-balances",
+ "parity-scale-codec",
+ "primitives",
+ "serde",
+ "sp-core 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-io 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-runtime 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-std 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
 ]
 
 [[package]]

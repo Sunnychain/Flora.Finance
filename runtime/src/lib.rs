@@ -291,7 +291,7 @@ impl pallet_template::Config  for Runtime {
 impl pallet_nft_market::Config for Runtime {
 	type Event = Event;
 	type CreateCollectionDeposit = CreateCollectionDeposit;
-	type Currency = Balances;
+	
 }
 
 impl pallet_nft::Config for Runtime {
@@ -321,6 +321,8 @@ impl simple_crowdfund::Config for Runtime {
 	type RetirementPeriod = RetirementPeriod;
 }
 
+
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -341,6 +343,7 @@ construct_runtime!(
 		NftMarket: pallet_nft_market::{Pallet, Call, Storage, Event<T>},
 		TokenNonFungible: pallet_nft::{Pallet, Call, Storage, Event<T>},
 		CrowdFund: simple_crowdfund::{Pallet, Call, Storage, Event<T>},
+
 		
 
 	}

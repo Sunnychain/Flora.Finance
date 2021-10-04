@@ -198,6 +198,7 @@ pub mod pallet {
 		NotOwnerOrApproved,
 		ApproveToCaller,
 		BadMetadata,
+		LockedAsset,
 	}
 
 	#[pallet::hooks]
@@ -380,6 +381,9 @@ impl<T: Config> Pallet<T> {
 			owner != T::AccountId::default(),
 			Error::<T>::TokenNonExistent
 		);
+
+		ensure!(IsLocked::<T>::get(id,token_id)==0,Error::<T>::LockedAsset);
+
 		ensure!(owner == *from, Error::<T>::NotTokenOwner);
 
 		let balance_from = Self::balance_of(id, from);

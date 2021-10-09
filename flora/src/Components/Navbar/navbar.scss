@@ -1,0 +1,88 @@
+body {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.NavBarItems {
+    align-items: baseline;
+    background: #6dbb37;
+    border: none #6dbb37 ;
+    display: flex;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
+    height: 60px;
+    .navbar-logo {
+        font-size: 15px;
+        margin-top: 10px;
+        color: #fff;
+        justify-self: start;
+        margin-left: 20px;
+        cursor: pointer;
+        a {
+            text-decoration: none;
+            color:white;
+        }
+        img {
+            margin-top:-5px;
+            margin-left: -50px;
+            width:250px;
+            
+        }
+    }
+
+    .nav-menu {
+        display: flex;
+        flex-wrap: wrap;
+        text-align: center;
+        margin-right: 2rem;
+        list-style-type: none;
+    }
+    .fa-tree {
+        font-size: 1.6rem;
+    }
+    
+}
+
+.nav-links {
+    text-decoration: none;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    &:hover {
+      color: black;
+      text-decoration: none;
+      background-color: #66ff99;
+      border-radius: 4px;
+      transition: all 0.2s ease-out;
+    }
+    
+}
+
+.link-btn {
+    background-color: #66ff99;
+    color: black;
+    border: none;
+    border-radius: 3px;
+    margin: 10px;
+    &:hover {
+      color: #66ff99;
+      background: #ccffdd;
+      width: 55px;
+    }
+} 
+
+.nav-links-app {
+    display: none;
+}
+
+@keyframes fadeTitle {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+

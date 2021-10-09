@@ -1,0 +1,116 @@
+header {
+  background-image: url('https://www.neoris.com/documents/20126/173896/pin+world.gif/f073031a-ea3c-ab2c-a152-af067064dda8?version=1.0&t=1586217070425&download=true');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-size:contain;
+  display: flex;
+  height: 110vh;
+  justify-content: center;
+  margin-top: 15px;
+  width: 110vw;
+  
+}
+@mixin transition {
+  @for $i from 1 through 14 {
+    div:nth-child(#{$i}) {
+      @keyframes example-#{$i} {
+        0% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(8px + $i);
+          opacity: $i / 16;
+        }
+      }
+    }
+  } 
+}
+
+h1 {
+  animation: rightThenLeft 2s, fade 2s;
+  font-family: 'Yaldevi', sans-serif;
+  font-size: 84px;
+  color: #6dbb37;
+  font-family: 'Oswald', sans-serif;
+  padding-right: 1em; 
+  @include transition;
+  @for $i from 1 through 14 {
+    div:nth-child(#{$i}) {
+      display: inline-block;
+      text-shadow: 2px 2px 3px black;
+      animation-name: example-#{$i};
+      animation-duration: 3s;
+      animation-iteration-count: infinite;
+      animation-delay:(#{$i*0.2s});
+      animation-timing-function: ease-in-out;
+    }
+  }
+}
+
+.box-end {
+  animation: rightThenLeft 2s, fade 2s;
+  display: flex;
+  align-self: end;
+  h2 {
+    font-family: 'Yaldevi', sans-serif;
+    margin-top: -200px;
+  }
+}
+
+/*.projects {
+  background-image: url('../../images/floragit.gif');
+  background-size: cover;
+  background-repeat: no-repeat repeat;
+  background-size: contain;
+  margin-left: 150px;
+  width: 70vw;
+  height: 300px;
+}*/
+
+.projects {
+  margin-left: 15px;
+  h2 {
+    font-size: 35px;
+  }
+}
+
+.planted_info {
+  animation: rightThenLeft 2s, fade 2s;
+  margin-top: 10px;
+  margin-left: 35px;
+
+  p {
+    margin-top: 15px;
+    opacity: 0.9;
+  }
+  img {
+      width: 80px;
+  }
+  .numberPlants {
+      margin-left: 85px;
+      margin-top: -30px;
+  }
+}
+@keyframes fade {
+  from {
+      opacity: 0;
+  }to {
+      opacity: 1;
+  }
+}
+
+@keyframes rightThenLeft {
+  from {
+      transform: translateX(255px);
+  }to {
+    transform: translateX(0px);
+  }
+}
+
+@keyframes leftThenRigth {
+  from {
+      transform: translateY(255px);
+  }to {
+    transform: translateY(0px);
+  }
+}

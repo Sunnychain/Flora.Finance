@@ -1,0 +1,95 @@
+$white-color-var: #fff;
+$pattern-text: 40px;
+$margin-patter: 10px;
+$margin-medium: 40px;
+body {
+  overflow-x: hidden;
+}
+/*
+.header-nft {
+  background-image: url('../../images/header.png');
+  background-repeat: no-repeat repeat;
+  background-size: cover;
+  height: 40vw;
+  width: 100%;
+  margin-top: -45px;
+  margin-bottom: -110px;
+}
+*/
+
+.nftintro {
+  margin-top: 100px;
+  background-image: url('../../images/nft.png');
+  background-size:contain;
+  background-position:center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  height: 100vh;
+  width: 120vw;
+  
+  p {
+    font-family: 'Yaldevi', sans-serif;
+    animation: rightThenLeft 2s, fade 2s;
+    margin-left: 20px;
+  }
+  h1 {
+    font-family: 'Yaldevi', sans-serif;
+    animation: rightThenLeft 2s, fade 2s;
+    margin-left: 20px;
+    font-size: 68px;
+  }
+  h3 {
+    font-family: 'Yaldevi', sans-serif;
+    animation: rightThenLeft 2s, fade 2s;
+    margin-left: 20px;
+    color: $white-color-var;
+    text-align: center;
+  }
+  h5 {
+    font-family: 'Yaldevi', sans-serif;
+    animation: rightThenLeft 2s, fade 2s;
+    margin-left: 20px;
+    opacity: 1;
+    text-align: center;
+  }
+}
+.nft-subMain {
+  margin-left: 25px;
+}
+
+.nft-market-btn {
+  animation: rightThenLeft 2s, fade 2s;
+  margin-top: 100px;
+  margin-left: $margin-patter;
+  button {
+    font-family: 'Yaldevi', sans-serif;
+    border-radius: 5px;
+    background-color: #00804d;
+    border: none;
+    color: $white-color-var;
+    margin-left: 20px;
+    min-height: 50px;
+    &:hover {
+      background-color: #80ffaa;
+    }
+    &:active {
+      background-color: #00804d;
+    }
+  }
+}
+
+@keyframes fade {
+  from {
+      opacity: 0;
+  }to {
+      opacity: 1;
+  }
+}
+
+@keyframes rightThenLeft {
+  from {
+      transform: translateX(255px);
+  }to {
+    transform: translateX(0px);
+  }
+}

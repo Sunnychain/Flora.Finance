@@ -1,0 +1,155 @@
+@import url('https://fonts.googleapis.com/css?family=Oswald');
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+.logo {
+    background-image: url('../../images/header.png');
+    background-repeat: no-repeat repeat;
+    background-size: cover;
+    height: 50vh;
+    width: 100%;
+    margin-top: -45px;
+}
+
+.background-init {
+    animation: leftThenRigth 2s, fade 3s;
+    align-items: left;
+    margin-left: 25px;
+    max-width: 550px;
+    margin-top: -200px;
+    h1{
+        color: black;
+        opacity: 0.7;
+    }
+}
+
+.planted-info {
+    animation: rightThenLeft 2s, fade 2s;
+    margin-top: 70px;
+    margin-left: 35px;
+
+    p {
+        opacity: 0.9;
+    }
+    img {
+        width: 80px;
+    }
+    .numberPlants {
+        margin-left: 80px;
+        margin-top: -30px;
+    }
+}
+
+.plantedInfo {
+    animation: leftThenRigth 2s, fade 3s;
+    display: flex;
+    width: 500px;
+    button {
+        color: white;
+        font-family: 'Yaldevi', sans-serif;
+        background-color: #00802b;
+        border: none;
+        border-radius: 15px;
+        margin: 5px;
+        width: auto;
+        height: 40px;
+
+        &:hover {
+            background-color: #004d1a;
+        }
+    }
+}
+.cardAbout {
+    
+    &:hover {
+        background-color: #F1F6EF;
+    }
+}
+.group-info {
+    animation: rightThenLeft 2s, fade 2s;
+    margin-top: 20px;
+    display: flex;
+    font-family: 'Quicksand', sans-serif;
+    align-items: center;
+    flex-direction: column;
+    h3 {
+        text-align: center;
+        font-size: 22px;
+        opacity: 0.6;
+    }
+    img {
+        align-items: center;
+        background-color: #f2f2f2;
+        width: 325px;
+    }
+}
+
+.intro-invest {
+    animation: rightThenLeft 2s, fade 2s;
+    margin-top: 20px;
+    display: flex;
+    font-family: 'Quicksand', sans-serif;
+    align-items: right;
+    text-align: right;
+    margin-right: 155px;
+    flex-direction: column;
+    .box {
+        h1 {
+            font-family: 'Quicksand', sans-serif;  
+            font-size: 55px;
+            text-align: right;
+            opacity: 0.6;
+        }
+    }
+}
+
+.flora {
+    animation: rightThenLeft 2s, fade 2s;
+    font-family: 'Quicksand', sans-serif;   
+    margin-top: 20px;
+    text-align: left;
+    margin-left: 40px;
+    margin-bottom: 22px;
+    h1 {
+        font-family: 'Quicksand', sans-serif;
+        opacity: 0.6;
+        font-size: 55px;
+    }
+}
+
+.imgCard {
+    animation: rightThenLeft 2s, fade 2s;
+    img {
+       margin-left: 38px;
+    }
+}
+
+@keyframes fade {
+    from {
+        opacity: 0;
+    }to {
+        opacity: 1;
+    }
+}
+
+@keyframes rightThenLeft {
+    from {
+        transform: translateX(255px);
+    }to {
+      transform: translateX(0px);
+    }
+}
+
+@keyframes leftThenRigth {
+    from {
+        transform: translateY(255px);
+    }to {
+      transform: translateY(0px);
+    }
+}

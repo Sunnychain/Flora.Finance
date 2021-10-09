@@ -1,0 +1,51 @@
+.about {
+    animation: rightThenLeft 2s, fade 2s;
+    font-family: 'Quicksand', sans-serif;   
+    margin-top: 20px;
+    text-align: left;
+    margin-left: 40px;
+    margin-bottom: 20px;
+    h1 {
+        font-family: 'Quicksand', sans-serif;
+        opacity: 0.6;
+        font-size: 55px;
+    }
+}
+
+.about-into {
+    animation: rightThenLeft 2s, fade 2s;
+    font-family: 'Quicksand', sans-serif;   
+    margin-top: 20px;
+    text-align: right;
+    margin-right: 20px;
+    margin-bottom: 20px;
+    h1 {
+        font-family: 'Quicksand', sans-serif;
+        opacity: 0.6;
+        font-size: 55px;
+    }
+    h3 {
+        font-size: 23x;
+        opacity: 0.6;
+    }
+
+}
+
+.game-info {
+    animation: rightThenLeft 2s, fade 2s;
+    font-family: 'Quicksand', sans-serif;   
+    margin-top: 20px;
+    text-align: left;
+    margin-left: 20px;
+    margin-bottom: 20px;
+    h1 {
+        font-family: 'Quicksand', sans-serif;
+        opacity: 0.6;
+        font-size: 55px;
+    }
+
+    h3 {
+        font-size: 23x;
+        opacity: 0.6;
+    }
+}

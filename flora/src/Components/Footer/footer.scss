@@ -1,0 +1,23 @@
+.footer {
+    position: relative;
+    background-image: url('../../images/footer.png');
+    background-repeat: no-repeat repeat;
+    background-size: cover;
+    height: 40vh;
+    margin-top: -50px;
+    width: 100%;
+
+}
+.icons {
+    position: absolute;
+    display: flex;
+    margin-top: -60px;
+    a {
+        color: #000
+        
+    }
+    a:hover {
+        color: white;
+    }
+    
+}

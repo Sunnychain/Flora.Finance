@@ -15,17 +15,41 @@ use sp_runtime::{
 };
 use sp_std::{convert::TryInto, prelude::*};
 
+
 pub use pallet::*;
+
+
+pub type CollectionId = u64;
 
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen)]
-pub struct Token<AccountId, BoundedString> {
+pub struct Token<AccountId,CollectionId,BoundedString> {
 	owner: AccountId,
+	collection:CollectionId,
 	name: BoundedString,
 	symbol: BoundedString,
 	base_uri: BoundedString,
+}
+
+#[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, RuntimeDebug)]
+pub enum NftType {
+	NonFungibleToken,
+	MultiToken,
+}
+
+/// Collection info
+#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
+pub struct Collection<AccountId> {
+	/// Class owner
+	pub owner: AccountId,
+	// The type of nft
+	pub nft_type: NftType,
+	/// The account of nft
+	pub nft_account: AccountId,
+	/// Metadata from ipfs
+	pub metadata: Vec<u8>,
 }
 
 #[frame_support::pallet]
@@ -52,6 +76,10 @@ pub mod pallet {
 		type CreateTokenDeposit: Get<BalanceOf<Self>>;
 
 		type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
+
+		/// The minimum balance to create collection
+		#[pallet::constant]
+		type CreateCollectionDeposit: Get<BalanceOf<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -60,12 +88,19 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub(super) type Tokens<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::NonFungibleTokenId, Token<T::AccountId, BoundedVec<u8, T::StringLimit>>>;
+		StorageMap<_, Blake2_128Concat, T::NonFungibleTokenId, Token<T::AccountId, CollectionId,BoundedVec<u8, T::StringLimit>>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn next_token_id)]
 	pub(super) type NextTokenId<T: Config> = StorageValue<_, T::NonFungibleTokenId, ValueQuery>;
 
+	#[pallet::storage]
+	pub type Collections<T: Config> =
+		StorageMap<_, Blake2_128Concat, CollectionId, Collection<T::AccountId>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn next_collection_id)]
+	pub(super) type NextCollectionId<T: Config> = StorageValue<_, CollectionId, ValueQuery>;
 
 
 	#[pallet::storage]
@@ -182,6 +217,8 @@ pub mod pallet {
 		Transfer(T::NonFungibleTokenId, T::AccountId, T::AccountId, TokenId),
 		Approval(T::NonFungibleTokenId, T::AccountId, T::AccountId, TokenId),
 		ApprovalForAll(T::NonFungibleTokenId, T::AccountId, T::AccountId, bool),
+		CollectionCreated(CollectionId, T::AccountId),
+		CollectionDestroyed(CollectionId, T::AccountId),
 	}
 
 	#[pallet::error]
@@ -199,6 +236,8 @@ pub mod pallet {
 		ApproveToCaller,
 		BadMetadata,
 		LockedAsset,
+		NoAvailableCollectionId,
+		CollectionNotFound,
 	}
 
 	#[pallet::hooks]
@@ -207,15 +246,44 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
+		pub fn create_collection(
+			origin: OriginFor<T>,
+			nft_type: NftType,
+
+			nft_account: T::AccountId,
+			metadata: Vec<u8>,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+
+			Self::do_create_collection(&who, nft_type, &nft_account, metadata)?;
+			
+			Ok(().into())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn destroy_collection(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+
+			Self::do_destroy_collection(&who, collection_id)?;
+
+			Ok(().into())
+		}
+
+
+		#[pallet::weight(10_000)]
 		pub fn create_token(
 			origin: OriginFor<T>,
+			collection:CollectionId,
 			name: Vec<u8>,
 			symbol: Vec<u8>,
 			base_uri: Vec<u8>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			Self::do_create_token(&who, name, symbol, base_uri)?;
+			Self::do_create_token(&who, collection,name, symbol, base_uri)?;
 
 			Ok(())
 		}
@@ -332,8 +400,58 @@ impl<T: Config> Pallet<T> {
 		Owners::<T>::contains_key(id, token_id)
 	}
 
+	pub fn do_create_collection(
+		who: &T::AccountId,
+		nft_type: NftType,
+		nft_account: &T::AccountId,
+		metadata: Vec<u8>,
+	) -> Result<CollectionId, DispatchError> {
+		let collection_id =
+			NextCollectionId::<T>::try_mutate(|id| -> Result<CollectionId, DispatchError> {
+				let current_id = *id;
+				*id = id
+					.checked_add(One::one())
+					.ok_or(Error::<T>::NoAvailableCollectionId)?;
+				Ok(current_id)
+			})?;
+
+		let deposit = T::CreateCollectionDeposit::get();
+		T::Currency::reserve(who, deposit.clone())?;
+
+		let collection = Collection {
+			owner: who.clone(),
+			nft_type,
+			nft_account: nft_account.clone(),
+			metadata,
+		};
+
+	
+		Collections::<T>::insert(collection_id, collection);
+
+		Self::deposit_event(Event::CollectionCreated(collection_id, who.clone()));
+		Ok(collection_id)
+	} 
+
+	pub fn do_destroy_collection(
+		who: &T::AccountId,
+		collection_id: CollectionId,
+	) -> DispatchResult {
+		Collections::<T>::try_mutate_exists(collection_id, |collection| -> DispatchResult {
+			let c = collection.take().ok_or(Error::<T>::CollectionNotFound)?;
+			ensure!(c.owner == *who, Error::<T>::NoPermission);
+
+			let deposit = T::CreateCollectionDeposit::get();
+			T::Currency::unreserve(who, deposit);
+
+			Self::deposit_event(Event::CollectionDestroyed(collection_id, who.clone()));
+
+			Ok(())
+		})
+	}
+
 	pub fn do_create_token(
 		who: &T::AccountId,
+		collection:CollectionId,
 		name: Vec<u8>,
 		symbol: Vec<u8>,
 		base_uri: Vec<u8>,
@@ -356,6 +474,7 @@ impl<T: Config> Pallet<T> {
 
 		let token = Token {
 			owner: who.clone(),
+			collection:collection.clone(),
 			name: bounded_name,
 			symbol: bounded_symbol,
 			base_uri: bounded_base_uri,

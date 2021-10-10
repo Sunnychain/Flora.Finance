@@ -267,6 +267,7 @@ parameter_types! {
 	pub const CreatePoolDeposit: Balance = 500 * MILLICENTS;
 	pub const CreateCollectionDeposit: Balance = 500 * MILLICENTS;
 	pub const CreateCurrencyInstanceDeposit: Balance = 500 * MILLICENTS;
+	pub const MinimumAuctionAliveTime : BlockNumber = 5 * MINUTES ;
 }
 
 parameter_types! {
@@ -290,7 +291,9 @@ impl pallet_template::Config  for Runtime {
 
 impl pallet_nft_market::Config for Runtime {
 	type Event = Event;
-	type CreateCollectionDeposit = CreateCollectionDeposit;
+	
+	// in hours
+	type MinimumAuctionAliveTime = MinimumAuctionAliveTime;
 	
 }
 
@@ -300,6 +303,7 @@ impl pallet_nft::Config for Runtime {
 	type NonFungibleTokenId = u32;
 	type StringLimit = StringLimit;
 	type CreateTokenDeposit = CreateTokenDeposit;
+	type CreateCollectionDeposit = CreateCollectionDeposit;
 	type Currency = Balances;
 }
 

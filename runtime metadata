@@ -4,11 +4,31 @@
   "InstanceId": "u64",
   "ExchangeId": "u32",
   "NonFungibleTokenId": "u32",
-  "Collection<AccountId>": {
+  "Collection": {
     "owner": "AccountId",
     "nft_type": "NftType",
     "nft_account": "AccountId",
     "metadata": "Vec<u8>"
+  },
+  "Token": {
+    "owner": "AccountId",
+    "name": "BoundedString",
+    "symbol": "BoundedString",
+    "base_uri": "BoundedString"
+  },
+   "Sale": {
+    "owner": "AccountId",
+    "collection": "CollectionId",
+    "nft_id": "NonFungibleTokenId",
+    "token_id": "TokenId",
+    "price": "BalanceOf"
+  },
+   "Bid": {
+    "bidder": "AccountId",
+    "collection": "CollectionId",
+    "nft_id": "NonFungibleTokenId",
+    "token_id": "TokenId",
+    "offer": "BalanceOf"
   },
   "TokenSymbol": {
     "_enum": {

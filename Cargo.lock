@@ -3734,10 +3734,12 @@ dependencies = [
  "orml-traits",
  "pallet-aura",
  "pallet-balances",
+ "pallet-game",
  "pallet-grandpa",
  "pallet-nft",
  "pallet-nft-market",
  "pallet-randomness-collective-flip",
+ "pallet-rank-token",
  "pallet-sudo",
  "pallet-template",
  "pallet-timestamp",
@@ -4024,6 +4026,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-game"
+version = "3.0.0-monthly-2021-09+1"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "orml-nft",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-nft",
+ "parity-scale-codec",
+ "primitives",
+ "serde",
+ "sp-core 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-io 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-runtime 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-std 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1#20a9bbb1fe47fcd62fcd64b2fa32456b4f434aaf"
@@ -4093,6 +4115,26 @@ dependencies = [
  "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
  "parity-scale-codec",
  "safe-mix",
+ "sp-runtime 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-std 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+]
+
+[[package]]
+name = "pallet-rank-token"
+version = "3.0.0-monthly-2021-09+1"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "orml-nft",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-nft",
+ "parity-scale-codec",
+ "primitives",
+ "serde",
+ "sp-core 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-io 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
  "sp-runtime 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
  "sp-std 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
 ]

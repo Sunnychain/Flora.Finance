@@ -15,6 +15,8 @@ use sp_runtime::{
 };
 use sp_std::{convert::TryInto, prelude::*};
 
+use sp_core::{sr25519, Pair, Public};
+
 
 pub use pallet::*;
 
@@ -80,6 +82,14 @@ pub mod pallet {
 		/// The minimum balance to create collection
 		#[pallet::constant]
 		type CreateCollectionDeposit: Get<BalanceOf<Self>>;
+
+		type CarbonZeroId : Get<u64>;
+
+		type CarbonZeroRareId : Get<u64>;
+
+		type CarbonZeroEpicId : Get<u64>;
+
+		type CarbonZeroLegendaryId : Get<u64>;
 	}
 
 	#[pallet::pallet]
@@ -241,7 +251,10 @@ pub mod pallet {
 	}
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		
+
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -501,7 +514,7 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::TokenNonExistent
 		);
 
-		ensure!(IsLocked::<T>::get(id,token_id)==0,Error::<T>::LockedAsset);
+		ensure!(IsLocked::<T>::get(id,token_id)==1,Error::<T>::LockedAsset);
 
 		ensure!(owner == *from, Error::<T>::NotTokenOwner);
 

@@ -23,13 +23,16 @@ type BalanceOf<T> =
 pub use pallet::*;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen)]
-pub struct RankToken<AccountId,RankLevel,BoundedString,u64> {
+pub struct Tournament<AccountId,BalanceOf,RankLevel,BoundedString> {
 	owner: AccountId,
-	rank:RankLevel,
+    vault: AccountId,
+    min_entry: BalanceOf,
+    creator_deposit:BalanceOf,
+	min_rank:RankLevel,
+    max_rank: RankLevel,
 	name: BoundedString,
 	base_uri: BoundedString,
-    num_win:u64,
-    num_loss:u64
+    banned_cards: BoundedString,
 }
 
 
@@ -43,10 +46,10 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-        /// Identifier for the class of rank token.
-		type RankTokenId: Member  + Parameter + AtLeast32BitUnsigned + Default + Copy + MaxEncodedLen;
+        /// Identifier for the class of tournament.
+		type TournamentId: Member  + Parameter + AtLeast32BitUnsigned + Default + Copy + MaxEncodedLen;
 
-		/// The minimum balance to create token
+		/// The minimum balance to create a tournament
 		#[pallet::constant]
 		type CreateTokenDeposit: Get<BalanceOf<Self>>;
 
@@ -64,12 +67,13 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	pub(super) type RankTokens<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::RankTokenId, RankToken<T::AccountId, RankLevel,BoundedVec<u8, T::StringLimit>,u64>>;
+	pub(super) type Tournaments<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::TournamentId, Tournament<T::AccountId,BalanceOf<T>, RankLevel,BoundedVec<u8, T::StringLimit>>>;
+        
 
 	#[pallet::storage]
 	#[pallet::getter(fn next_token_id)]
-	pub(super) type NextRankTokenId<T: Config> = StorageValue<_, T::RankTokenId, ValueQuery>;
+	pub(super) type NextTournamentId<T: Config> = StorageValue<_, T::TournamentId, ValueQuery>;
 
 
 
@@ -77,13 +81,13 @@ pub mod pallet {
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		RankTokenCreated(T::RankTokenId, T::AccountId),
+		TournamentCreated(T::TournamentId, T::AccountId),
 	
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		NoAvailableTokenId,
+		NoAvailableTournamentId,
 		Overflow,
 		Underflow,
 		TokenAlreadyMinted,
@@ -106,41 +110,45 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
-		pub fn create_ranked_token(
+		pub fn create_tournament(
 			origin: OriginFor<T>,
+            vault:T::AccountId,
+            min_entry: BalanceOf<T>,
+            creator_deposit: BalanceOf<T>,
+            min_rank: RankLevel,
+            max_rank: RankLevel,
 			name: Vec<u8>,
 			base_uri: Vec<u8>,
+            banned_cards:Vec<u8>
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			Self::do_create_ranked_token(&who, name,  base_uri)?;
+           
+			Self::do_create_tournament(who, vault,min_entry,creator_deposit,min_rank,max_rank,name, base_uri,banned_cards)?;
 			
 			Ok(().into())
 		}
-        #[pallet::weight(10_000)]
-		pub fn update_ranked_token(
-			origin: OriginFor<T>,
-			name: Vec<u8>,
-			base_uri: Vec<u8>,
-		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-
-			Self::do_update_ranked_token(&who, name,  base_uri)?;
-			
-			Ok(().into())
-		}
+      
 			
 	
 }
 
 impl<T: Config> Pallet<T> {
 
-    pub fn do_create_ranked_token(
-		who: &T::AccountId,
-		name: Vec<u8>,
-		base_uri: Vec<u8>,
-	) -> Result<T::RankTokenId, DispatchError> {
-		let deposit = T::CreateTokenDeposit::get();
+    pub fn do_create_tournament(
+		who: T::AccountId,
+		vault:T::AccountId,
+        min_entry: BalanceOf<T>,
+        creator_deposit: BalanceOf<T>,
+        min_rank: RankLevel,
+        max_rank: RankLevel,
+        name: Vec<u8>,
+        base_uri: Vec<u8>,
+        banned_cards:Vec<u8>
+	) -> Result<T::TournamentId, DispatchError> {
+
+
+        let deposit = T::CreateTokenDeposit::get();
 		T::Currency::reserve(&who, deposit.clone())?;
 
 		let bounded_name: BoundedVec<u8, T::StringLimit> =
@@ -149,40 +157,41 @@ impl<T: Config> Pallet<T> {
 		let bounded_base_uri: BoundedVec<u8, T::StringLimit> =
 			base_uri.clone().try_into().map_err(|_| Error::<T>::BadMetadata)?;
 
-		let id = NextRankTokenId::<T>::try_mutate(|id| -> Result<T::RankTokenId, DispatchError> {
+        let bounded_ban_cards: BoundedVec<u8, T::StringLimit> =
+			banned_cards.clone().try_into().map_err(|_| Error::<T>::BadMetadata)?;
+
+		let id = NextTournamentId::<T>::try_mutate(|id| -> Result<T::TournamentId, DispatchError> {
 			let current_id = *id;
-			*id = id.checked_add(&One::one()).ok_or(Error::<T>::NoAvailableTokenId)?;
+			*id = id.checked_add(&One::one()).ok_or(Error::<T>::NoAvailableTournamentId)?;
 			Ok(current_id)
 		})?;
 
-		let token = RankToken {
+		let tournament = Tournament {
 			owner: who.clone(),
-			rank:0u64.into(),
+            vault: vault,
+            min_entry: min_entry,
+            creator_deposit:creator_deposit,
+            min_rank:min_rank,
+            max_rank: max_rank,
             name: bounded_name,
-			base_uri: bounded_base_uri,
-            num_win:0u64.into(),
-            num_loss:0u64.into()
+            base_uri: bounded_base_uri,
+            banned_cards: bounded_ban_cards
+     		
+        };
 
-     
-		};
-
-		RankTokens::<T>::insert(id, token);
+		Tournaments::<T>::insert(id, tournament);
 
 		
 
-		Self::deposit_event(Event::RankTokenCreated(id, who.clone()));
+		Self::deposit_event(Event::TournamentCreated(id, who.clone()));
 
 		Ok(id)
+	
+
+		
 	}
 	
-    pub fn do_update_ranked_token(
-		who: &T::AccountId,
-		name: Vec<u8>,
-		base_uri: Vec<u8>,
-	) ->  DispatchError {
-		
-		Ok(()))
-	}
+   
 
 
 	}

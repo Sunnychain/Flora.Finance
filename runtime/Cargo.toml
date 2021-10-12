@@ -21,6 +21,11 @@ default-features = false
 path = '../pallets/simple-crowdfund'
 version = '3.0.0-monthly-2021-09+1'
 
+[dependencies.pallet-tournament]
+default-features = false
+path = '../pallets/tournament'
+version = '3.0.0-monthly-2021-09+1'
+
 
 [dependencies.pallet-token-fungible]
 default-features = false
@@ -37,10 +42,7 @@ default-features = false
 path = '../pallets/nfts'
 version = '3.0.0-monthly-2021-09+1'
 
-[dependencies.pallet-rank-token]
-default-features = false
-path = '../pallets/rank-token'
-version = '3.0.0-monthly-2021-09+1'
+
 
 [dependencies.pallet-game]
 default-features = false

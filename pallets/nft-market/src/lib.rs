@@ -322,13 +322,14 @@ impl<T: Config> Pallet<T> {
 
 				Ok(())
 
-			});
+			})?;
 
 
 			
-
+			
 		}
 		Ok(())
+		
 	}
 
 	
@@ -555,7 +556,7 @@ impl<T: Config> Pallet<T> {
 			//update price
 			auction_info.current_price=offer;
 			//update num_bid
-			auction_info.num_bid.checked_add(1).ok_or(Error::<T>::NumOverflow)?;
+			auction_info.num_bid=auction_info.num_bid.checked_add(1).ok_or(Error::<T>::NumOverflow)?;
 			//update last bidder
 			auction_info.last_bidder = who.clone();
 

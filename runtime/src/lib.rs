@@ -279,6 +279,10 @@ parameter_types! {
 	pub const NftPoolPalletId: PalletId = PalletId(*b"w3g/nftp");
 	pub ZeroAccountId: AccountId = AccountId::from([0u8; 32]);
 	pub const StringLimit: u32 = 50;
+	pub const CarbonZeroId : u64 = (*b"nft/types/carbonzero") ;
+	pub const CarbonZeroRareId : u64 = (*b"nft/types/carbonzero/rare") ;
+	pub const CarbonZeroEpicId : u64 = (*b"nft/types/carbonzero/epic") ;
+	pub const CarbonZeroLegendaryId : u64 = (*b"nft/types/carbonzero/legendary") ;
 }
 
 /// Configure the pallet-template in pallets/template.
@@ -305,6 +309,7 @@ impl pallet_nft::Config for Runtime {
 	type CreateTokenDeposit = CreateTokenDeposit;
 	type CreateCollectionDeposit = CreateCollectionDeposit;
 	type Currency = Balances;
+	type CarbonZeroId = CarbonZeroId;
 }
 
 

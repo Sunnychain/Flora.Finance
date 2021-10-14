@@ -16,6 +16,7 @@ default-features = false
 path = '../pallets/template'
 version = '3.0.0-monthly-2021-09+1'
 
+
 [dependencies.simple-crowdfund]
 default-features = false
 path = '../pallets/simple-crowdfund'
@@ -106,7 +107,12 @@ version = '4.0.0-dev'
 
 [dependencies.hex-literal]
 optional = true
-version = '0.3.1'
+version = '0.3.3'
+
+[dependencies.hex]
+optional = true
+version = '0.4.3'
+
 
 [dependencies.pallet-aura]
 default-features = false
@@ -291,5 +297,6 @@ std = [
     'orml-auction/std',
     'pallet-nft-market/std',
     'simple-crowdfund/std',
+    'hex/std',
     
 ]

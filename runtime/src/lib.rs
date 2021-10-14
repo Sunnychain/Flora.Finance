@@ -6,12 +6,14 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+
+
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{H256, OpaqueMetadata, crypto::KeyTypeId,sr25519};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify},
@@ -53,8 +55,6 @@ pub use sp_runtime::{Perbill, Permill};
 
 /// Import the template pallet.
 pub use pallet_template;
-
-
 
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -270,6 +270,8 @@ parameter_types! {
 	pub const MinimumAuctionAliveTime : BlockNumber = 5 * MINUTES ;
 }
 
+
+
 parameter_types! {
 	pub const TokenFungiblePalletId: PalletId = PalletId(*b"w3g/tofm");
 	pub const TokenNonFungiblePalletId: PalletId = PalletId(*b"w3g/tonf");
@@ -279,10 +281,15 @@ parameter_types! {
 	pub const NftPoolPalletId: PalletId = PalletId(*b"w3g/nftp");
 	pub ZeroAccountId: AccountId = AccountId::from([0u8; 32]);
 	pub const StringLimit: u32 = 50;
-	pub const CarbonZeroId : u64 = (*b"nft/types/carbonzero") ;
-	pub const CarbonZeroRareId : u64 = (*b"nft/types/carbonzero/rare") ;
-	pub const CarbonZeroEpicId : u64 = (*b"nft/types/carbonzero/epic") ;
-	pub const CarbonZeroLegendaryId : u64 = (*b"nft/types/carbonzero/legendary") ;
+	pub const CarbonZeroId : u64 = 0 ;
+	pub const CarbonZeroRareId : u64 = 1 ;
+	pub const CarbonZeroEpicId : u64 = 2 ;
+	pub const CarbonZeroLegendaryId : u64 = 3 ;
+	
+	//pub NftMaster: AccountId = AccountId::from_ss58check("d6c71059dbbe9ad2b0ed3f289738b800836eb425544ce694825285b958ca755e").unwrap();
+	//pub const NftMaster: AccountId=AccountId::from(b"d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d");
+	
+	
 }
 
 /// Configure the pallet-template in pallets/template.
@@ -310,6 +317,10 @@ impl pallet_nft::Config for Runtime {
 	type CreateCollectionDeposit = CreateCollectionDeposit;
 	type Currency = Balances;
 	type CarbonZeroId = CarbonZeroId;
+	type CarbonZeroRareId = CarbonZeroRareId  ;
+	type CarbonZeroEpicId =  CarbonZeroEpicId ;
+	type CarbonZeroLegendaryId =  CarbonZeroLegendaryId ;
+	
 }
 
 

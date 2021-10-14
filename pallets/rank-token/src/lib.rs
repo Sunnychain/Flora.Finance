@@ -17,6 +17,9 @@ use sp_std::{convert::TryInto, prelude::*};
 
 pub type RankLevel=u64;
 
+
+
+
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 

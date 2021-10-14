@@ -15,7 +15,6 @@ use sp_runtime::{
 };
 use sp_std::{convert::TryInto, prelude::*};
 
-use sp_core::{sr25519, Pair, Public};
 
 
 pub use pallet::*;
@@ -90,6 +89,8 @@ pub mod pallet {
 		type CarbonZeroEpicId : Get<u64>;
 
 		type CarbonZeroLegendaryId : Get<u64>;
+
+		
 	}
 
 	#[pallet::pallet]
@@ -218,6 +219,22 @@ pub mod pallet {
 		TokenIndex,
 		ValueQuery,
 	>;
+
+
+	#[pallet::genesis_config]
+    #[derive(Default)]
+    pub struct GenesisConfig;
+
+    #[pallet::genesis_build]
+    impl<T: Config> GenesisBuild<T> for GenesisConfig {
+        fn build(&self) {
+            // create a NTF class
+			//let col_id = Pallet::<T>::do_create_collection(&T::NftMaster::get(), NftType::NonFungibleToken, &T::NftMaster::get(), Vec::<u8>::new()).unwrap();
+			//Pallet::<T>::do_create_token(,col_id,  Vec::<u8>::new(), Vec::<u8>::new(), Vec::<u8>::new());
+				
+        }
+    }
+
 
 	#[pallet::event]
 	#[pallet::metadata(T::AccountId = "AccountId")]

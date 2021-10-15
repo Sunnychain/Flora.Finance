@@ -9,13 +9,10 @@ use frame_support::{
 	PalletId, BoundedVec,
 };
 use primitives::{TokenId, TokenIndex};
-use sp_runtime::{
-	traits::{AtLeast32BitUnsigned, One, CheckedAdd},
-	RuntimeDebug,
-};
+use sp_runtime::{RuntimeDebug, traits::{AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, One}};
 use sp_std::{convert::TryInto, prelude::*};
 
-
+use pallet_utils;
 
 pub use pallet::*;
 
@@ -58,6 +55,8 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
+
+	use sp_runtime::traits::AccountIdConversion;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -113,6 +112,10 @@ pub mod pallet {
 	#[pallet::getter(fn next_collection_id)]
 	pub(super) type NextCollectionId<T: Config> = StorageValue<_, CollectionId, ValueQuery>;
 
+	/// The class id for orml_nft
+    #[pallet::storage]
+    #[pallet::getter(fn nft_master)]
+    pub type NftMaster<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
 	#[pallet::storage]
 	pub type IsLocked<T: Config> =
@@ -221,18 +224,35 @@ pub mod pallet {
 	>;
 
 
-	#[pallet::genesis_config]
-    #[derive(Default)]
-    pub struct GenesisConfig;
+
+
+    #[pallet::genesis_config]
+    pub struct GenesisConfig<T:Config>{
+		pub nft_master: T::AccountId,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> GenesisConfig<T> {
+			Self {
+				nft_master: Default::default(),
+			}
+		}
+	}
 
     #[pallet::genesis_build]
-    impl<T: Config> GenesisBuild<T> for GenesisConfig {
+    impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
-            // create a NTF class
-			//let col_id = Pallet::<T>::do_create_collection(&T::NftMaster::get(), NftType::NonFungibleToken, &T::NftMaster::get(), Vec::<u8>::new()).unwrap();
-			//Pallet::<T>::do_create_token(,col_id,  Vec::<u8>::new(), Vec::<u8>::new(), Vec::<u8>::new());
-				
+               // create a NTF class
+			let treasury_acc = self.nft_master.clone();
+
+			NftMaster::<T>::put(treasury_acc.clone());
+			
+			let col_id = Pallet::<T>::do_create_collection(&treasury_acc.clone(), NftType::NonFungibleToken, &treasury_acc.clone(), "yoyo".into()).unwrap();
+			Pallet::<T>::do_create_token(&treasury_acc.clone(),col_id,  "first token".into(), "first token".into(), "first token".into());
+			
         }
+        
     }
 
 
@@ -275,6 +295,8 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+
+
 		#[pallet::weight(10_000)]
 		pub fn create_collection(
 			origin: OriginFor<T>,
@@ -426,6 +448,11 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+	/// Returns the `AccountId` of the treasury account.
+	pub fn treasury_account() -> T::AccountId {
+			AccountIdConversion::into_account(&T::PalletId::get())
+	}
+
 	pub fn exists(id: T::NonFungibleTokenId, token_id: TokenId) -> bool {
 		Owners::<T>::contains_key(id, token_id)
 	}

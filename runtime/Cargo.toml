@@ -17,6 +17,11 @@ path = '../pallets/template'
 version = '3.0.0-monthly-2021-09+1'
 
 
+[dependencies.pallet-utils]
+default-features = false
+path = '../pallets/utils'
+version = '3.0.0-monthly-2021-09+1'
+
 [dependencies.simple-crowdfund]
 default-features = false
 path = '../pallets/simple-crowdfund'

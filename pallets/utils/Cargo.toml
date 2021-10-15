@@ -32,6 +32,12 @@ git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
 
+[dependencies.pallet-timestamp]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'monthly-2021-09+1'
+version = '4.0.0-dev'
+
 [dependencies.codec]
 default-features = false
 features = ['derive']
@@ -76,7 +82,7 @@ branch = "master"
 [dependencies]
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master", default-features = false }
 primitives = { default-features = false, path = "../../primitives" }
-pallet-nft = { default-features = false, path = "../nfts" }
+
 
 
 
@@ -94,6 +100,7 @@ std = [
     'pallet-balances/std',
     "orml-traits/std",
 	"orml-nft/std",
+    'pallet-timestamp/std',
     
 ]
 try-runtime = ['frame-support/try-runtime']

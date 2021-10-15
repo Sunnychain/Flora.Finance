@@ -3688,6 +3688,7 @@ dependencies = [
  "frame-benchmarking-cli",
  "jsonrpc-core",
  "node-template-runtime",
+ "pallet-nft",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
  "sc-cli",
@@ -3747,6 +3748,7 @@ dependencies = [
  "pallet-tournament",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-utils",
  "parity-scale-codec",
  "primitives",
  "serde",
@@ -4078,6 +4080,7 @@ dependencies = [
  "orml-nft",
  "orml-traits",
  "pallet-balances",
+ "pallet-utils",
  "parity-scale-codec",
  "primitives",
  "serde",
@@ -4265,6 +4268,26 @@ dependencies = [
  "parity-scale-codec",
  "sp-api",
  "sp-runtime 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+]
+
+[[package]]
+name = "pallet-utils"
+version = "3.0.0-monthly-2021-09+1"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "orml-nft",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "primitives",
+ "serde",
+ "sp-core 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-io 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-runtime 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
+ "sp-std 4.0.0-dev (git+https://github.com/paritytech/substrate.git?tag=monthly-2021-09+1)",
 ]
 
 [[package]]

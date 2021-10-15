@@ -81,7 +81,7 @@ branch = "master"
 [dependencies]
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master", default-features = false }
 primitives = { default-features = false, path = "../../primitives" }
-
+pallet-utils= { default-features = false, path = "../utils" }
 
 
 [features]
@@ -99,6 +99,7 @@ std = [
     "orml-traits/std",
 	"orml-nft/std",
     "sp-core/std",
+    'pallet-utils/std',
     
 ]
 try-runtime = ['frame-support/try-runtime']

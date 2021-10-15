@@ -5,37 +5,22 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult},
 	ensure,
-	traits::{Currency, Get, ReservableCurrency},
+	traits::{Currency, Get, ReservableCurrency,Time},
 	PalletId, BoundedVec,
 };
+
+#[cfg(feature = "std")]
+use serde::Deserialize;
+
+
+
 use primitives::{TokenId, TokenIndex};
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, One, CheckedAdd},
 	RuntimeDebug,
 };
-use sp_std::{convert::TryInto, prelude::*};
+use sp_std::{collections::btree_set::BTreeSet,convert::TryInto, prelude::*};
 
-
-pub use pallet::*;
-
-#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
-pub struct WhoAndWhen<AccountId,BlockNumber,Moment> {
-    pub account: T::AccountId,
-    pub block: T::BlockNumber,
-    pub time:T::Moment,
-}
-
-
-
-impl<T: Config> WhoAndWhen<T> {
-    pub fn new(account: T::AccountId) -> Self {
-        WhoAndWhen {
-            account,
-            block: <system::Config<T>>::block_number(),
-            time: <pallet_timestamp::Config<T>>::now(),
-        }
-    }
-}
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(Deserialize))]
@@ -83,98 +68,154 @@ impl Content {
     }
 }
 
-type BalanceOf<T> = <<T as Trait>::Currency as Currency<<T as system::Trait>::AccountId>>::Balance;
-
-type NegativeImbalanceOf<T> = <<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::NegativeImbalance;
-
-
-
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
+	
+	use sp_runtime::traits::AccountIdConversion;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_timestamp::Config{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-        type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
-        
+		type PalletId: Get<PalletId>;
 
-		
+        type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
+
 	}
+
+	pub type SpaceId = u64;
+
+	#[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
+	pub struct WhoAndWhen<T:Config> {
+		pub account: T::AccountId,
+		pub block: T::BlockNumber,
+		pub time: T::Moment,
+	}
+
+	impl<T:Config> WhoAndWhen<T> {
+		pub fn new(account: T::AccountId) -> Self {
+			WhoAndWhen {
+				account,
+				block: frame_system::Pallet::<T>::block_number(),
+				time: <pallet_timestamp::Pallet<T>>::now(),
+			}
+		}
+	}
+
+	#[derive(Encode, Decode, Ord, PartialOrd, Clone, Eq, PartialEq, RuntimeDebug)]
+	pub enum User<AccountId> {
+		Account(AccountId),
+		Space(SpaceId),
+	}
+
+impl<AccountId> User<AccountId> {
+    pub fn maybe_account(self) -> Option<AccountId> {
+        if let User::Account(account_id) = self {
+            Some(account_id)
+        } else {
+            None
+        }
+    }
+}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	#[pallet::storage]
-	#[pallet::getter(fn treasury_account)]
-	pub(super) type TreasuryAccount<T: Config> = StorageValue<_,|config| config.treasury_account.clone()): T::AccountId, ValueQuery>;
-
-	#[pallet::genesis_config]
-    #[derive(Default)]
-    pub struct GenesisConfig;
-
-    #[pallet::genesis_build]
-    impl<T: Config> GenesisBuild<T> for GenesisConfig {
-        add_extra_genesis {
-			config(treasury_account): T::AccountId;
-			build(|config| {
-				// Create Treasury account
-				let _ = T::Currency::make_free_balance_be(
-					&config.treasury_account,
-					T::Currency::minimum_balance(),
-				);
-			});
-    }
+	
 
 	#[pallet::event]
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		TournamentCreated(T::TournamentId, T::AccountId),
+		
 	
 	}
 
+
+type BalanceOf<T> =
+<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
+
+type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+
 	#[pallet::error]
 	pub enum Error<T> {
-		NoAvailableTournamentId,
-		Overflow,
-		Underflow,
-		TokenAlreadyMinted,
-		InvalidId,
-		NoPermission,
-		NotTokenOwner,
-		TokenNonExistent,
-		ApproveToCurrentOwner,
-		NotOwnerOrApproved,
-		ApproveToCaller,
-		BadMetadata,
-		LockedAsset,
-		NoAvailableCollectionId,
-		CollectionNotFound,
+		 /// Account is blocked in a given space.
+		 AccountIsBlocked,
+		 /// Content is blocked in a given space.
+		 ContentIsBlocked,
+		 /// Post is blocked in a given space.
+		 PostIsBlocked,
+		 /// IPFS CID is invalid.
+		 InvalidIpfsCid,
+		 /// `Raw` content type is not yet supported.
+		 RawContentTypeNotSupported,
+		 /// `Hyper` content type is not yet supported.
+		 HypercoreContentTypeNotSupported,
+		 /// Space handle is too short.
+		 HandleIsTooShort,
+		 /// Space handle is too long.
+		 HandleIsTooLong,
+		 /// Space handle contains invalid characters.
+		 HandleContainsInvalidChars,
+		 /// Content type is `None`.
+		 ContentIsEmpty,
 	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {
 	
-			
-	
-}
 
 impl<T: Config> Pallet<T> {
 
-	
-   
-
-
+	/// Returns the `AccountId` of the treasury account.
+	pub fn treasury_account() -> T::AccountId {
+		T::PalletId::get().into_account()
 	}
+   
+	pub fn is_valid_content(content: Content) -> DispatchResult {
+        match content {
+            Content::None => Ok(()),
+            Content::Raw(_) => Err(Error::<T>::RawContentTypeNotSupported.into()),
+            Content::IPFS(ipfs_cid) => {
+                let len = ipfs_cid.len();
+                // IPFS CID v0 is 46 bytes.
+                // IPFS CID v1 is 59 bytes.df-integration-tests/src/lib.rs:272:5
+                ensure!(len == 46 || len == 59, Error::<T>::InvalidIpfsCid);
+                Ok(())
+            },
+            Content::Hyper(_) => Err(Error::<T>::HypercoreContentTypeNotSupported.into())
+        }
+    }
+
+	pub fn remove_from_vec<F: PartialEq>(vector: &mut Vec<F>, element: F) {
+		if let Some(index) = vector.iter().position(|x| *x == element) {
+			vector.swap_remove(index);
+		}
+	}
+
+	pub fn bool_to_option(value: bool) -> Option<bool> {
+		if value { Some(value) } else { None }
+	}
+
+	pub fn convert_users_vec_to_btree_set(
+        users_vec: Vec<User<T::AccountId>>
+    ) -> Result<BTreeSet<User<T::AccountId>>, DispatchError> {
+        let mut users_set: BTreeSet<User<T::AccountId>> = BTreeSet::new();
+
+        for user in users_vec.iter() {
+            users_set.insert(user.clone());
+        }
+
+        Ok(users_set)
+    }
+}
 
 	
 }

@@ -279,6 +279,7 @@ parameter_types! {
 	pub const WrapCurrencyPalletId: PalletId = PalletId(*b"w3g/wrap");
 	pub const PoolPalletId: PalletId = PalletId(*b"w3g/pool");
 	pub const NftPoolPalletId: PalletId = PalletId(*b"w3g/nftp");
+	pub const UtilsPalletId: PalletId = PalletId(*b"UtilsAcc");
 	pub ZeroAccountId: AccountId = AccountId::from([0u8; 32]);
 	pub const StringLimit: u32 = 50;
 	pub const CarbonZeroId : u64 = 0 ;
@@ -361,7 +362,7 @@ construct_runtime!(
 		// Include the custom logic from the pallet-template in the runtime.
 		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
 		NftMarket: pallet_nft_market::{Pallet, Call, Storage, Event<T>},
-		TokenNonFungible: pallet_nft::{Pallet, Call, Storage, Event<T>},
+		TokenNonFungible: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>},
 		CrowdFund: simple_crowdfund::{Pallet, Call, Storage, Event<T>},
 
 		

@@ -1,5 +1,5 @@
-
 #![cfg_attr(not(feature = "std"), no_std)]
+pub use pallet::*;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
@@ -75,8 +75,6 @@ pub mod pallet {
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 	
-	use sp_runtime::traits::AccountIdConversion;
-
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_timestamp::Config{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -112,29 +110,63 @@ pub mod pallet {
 		Space(SpaceId),
 	}
 
-impl<AccountId> User<AccountId> {
-    pub fn maybe_account(self) -> Option<AccountId> {
-        if let User::Account(account_id) = self {
-            Some(account_id)
-        } else {
-            None
-        }
-    }
-}
+	impl<AccountId> User<AccountId> {
+		pub fn maybe_account(self) -> Option<AccountId> {
+			if let User::Account(account_id) = self {
+				Some(account_id)
+			} else {
+				None
+			}
+		}
+	}
+
+	/// Treasury Account
+    #[pallet::storage]
+    #[pallet::getter(fn treasury_account)]
+    pub type TreasuryAccount<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	
+	#[pallet::genesis_config]
+    pub struct GenesisConfig<T:Config>{
+		pub treasury_account: T::AccountId,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> GenesisConfig<T> {
+			Self {
+				treasury_account: Default::default(),
+			}
+		}
+	}
+
+    #[pallet::genesis_build]
+    impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+        fn build(&self) {
+               // create a NTF class
+			let treasury_acc = self.treasury_account.clone();
+
+			TreasuryAccount::<T>::put(treasury_acc.clone());
+			
+			
+        }
+        
+    }
+
 
 	#[pallet::event]
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		
+		TokenCreated(T::AccountId),
 	
 	}
+
+
 
 
 type BalanceOf<T> =
@@ -174,11 +206,7 @@ type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_s
 
 impl<T: Config> Pallet<T> {
 
-	/// Returns the `AccountId` of the treasury account.
-	pub fn treasury_account() -> T::AccountId {
-		T::PalletId::get().into_account()
-	}
-   
+	   
 	pub fn is_valid_content(content: Content) -> DispatchResult {
         match content {
             Content::None => Ok(()),

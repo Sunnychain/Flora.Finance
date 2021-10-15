@@ -293,12 +293,6 @@ parameter_types! {
 	
 }
 
-/// Configure the pallet-template in pallets/template.
-impl pallet_template::Config  for Runtime {
-	type Event = Event;
-	
-	
-}
 
 
 impl pallet_nft_market::Config for Runtime {
@@ -342,6 +336,12 @@ impl simple_crowdfund::Config for Runtime {
 	type RetirementPeriod = RetirementPeriod;
 }
 
+impl pallet_utils::Config  for Runtime {
+	type Event = Event;
+	type PalletId = UtilsPalletId;
+	type Currency = Balances;
+	
+}
 
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -359,14 +359,10 @@ construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		// Include the custom logic from the pallet-template in the runtime.
-		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
 		NftMarket: pallet_nft_market::{Pallet, Call, Storage, Event<T>},
 		TokenNonFungible: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>},
 		CrowdFund: simple_crowdfund::{Pallet, Call, Storage, Event<T>},
-
-		
-
+		UtilsModule: pallet_utils::{Pallet,Config<T>,Storage,Event<T>},
 	}
 );
 

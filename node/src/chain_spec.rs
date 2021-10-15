@@ -1,6 +1,6 @@
 use node_template_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-	SystemConfig, WASM_BINARY,TokenNonFungibleConfig,
+	SystemConfig, WASM_BINARY,TokenNonFungibleConfig,UtilsModuleConfig,
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -155,6 +155,11 @@ fn testnet_genesis(
 
 		token_non_fungible: TokenNonFungibleConfig {
 			nft_master: root_key.clone(),
+
+		},
+
+		utils_module: UtilsModuleConfig {
+			treasury_account: root_key.clone(),
 
 		},
 

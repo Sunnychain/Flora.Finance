@@ -112,7 +112,7 @@ pub mod pallet {
 	#[pallet::getter(fn next_collection_id)]
 	pub(super) type NextCollectionId<T: Config> = StorageValue<_, CollectionId, ValueQuery>;
 
-	/// The class id for orml_nft
+	/// The NftMaster Account similar to treasury vault
     #[pallet::storage]
     #[pallet::getter(fn nft_master)]
     pub type NftMaster<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;

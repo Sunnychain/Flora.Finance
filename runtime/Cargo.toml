@@ -298,10 +298,9 @@ std = [
     'sp-version/std',
 	"orml-nft/std",
     "pallet-nft/std",
-    
+    'pallet-utils/std',
     'orml-auction/std',
     'pallet-nft-market/std',
     'simple-crowdfund/std',
-    'hex/std',
-    
+        
 ]

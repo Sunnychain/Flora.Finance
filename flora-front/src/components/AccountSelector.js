@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import MainWallet from '../wallet/main';
+// import MainWallet from '../wallet/main';
 import { useSubstrate } from '../substrate-lib';
 import { Menu, Button, Dropdown, Container, Icon, Image, Label } from 'semantic-ui-react';
 import flora from '../images/flora.svg';
@@ -19,7 +19,7 @@ function Main (props) {
   }));
 
   const initialAddress =
-    keyringOptions.length > 0 ? keyringOptions[0] = '' : '';
+    keyringOptions.length > 0 ? keyringOptions[0] = '' : '5H1ayV6PV7DNc4dwcRJzB6zQGxGEeQfi139hS55nKVhBu5FJ';
 
   // Set the initial address
   useEffect(() => {
@@ -35,7 +35,7 @@ function Main (props) {
 
   return (
     <main>
-    <MainWallet />
+   
     <Menu
       attached='top'
       tabular
@@ -47,7 +47,7 @@ function Main (props) {
       }}
     >
     <Container>
-      <Menu.Menu>
+      <Menu.Menu style={{ alignItems: 'left' }}>
         <Image src={flora} size='medium' />
       </Menu.Menu>
       <Menu.Menu position='right' style={{ alignItems: 'center' }}>

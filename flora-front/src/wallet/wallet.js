@@ -31,7 +31,7 @@ export default function Wallet () {
         {
           active
             ? ''
-            : <Button positive onClick={ connect }>Connect wallet </Button>
+            : <Button positive onClick={ connect }> Connect wallet </Button>
         }
         {
           account

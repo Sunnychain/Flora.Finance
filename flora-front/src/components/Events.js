@@ -58,9 +58,9 @@ function Main (props) {
         color='grey'
         floated='right'
         icon='erase'
-        onClick={ _ => setEventFeed([]) }
+        onClick={_ => setEventFeed([])}
       />
-      <Feed style={{ clear: 'both', overflow: 'auto', maxHeight: feedMaxHeight }} events={ eventFeed } />
+      <Feed style={{ clear: 'both', overflow: 'auto', maxHeight: feedMaxHeight }} events={eventFeed} />
     </Grid.Column>
   );
 }

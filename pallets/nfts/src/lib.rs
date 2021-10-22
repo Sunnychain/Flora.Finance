@@ -23,18 +23,58 @@ type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen)]
-pub struct Token<AccountId,CollectionId,BoundedString> {
+pub struct Token<AccountId,CollectionId,NFTStatus,BoundedString> {
 	owner: AccountId,
+	land_owner:AccountId,
 	collection:CollectionId,
+	status:NFTStatus,
+	tree_name:BoundedString,
+	tree_description:BoundedString,
+	forest_type_flag:BoundedString,
+	land_owner_contract:BoundedString,
+	land_owner_insurance_contract:BoundedString,
+	gps_land_coordiates:BoundedString,
 	name: BoundedString,
 	symbol: BoundedString,
 	base_uri: BoundedString,
+	total_trees:u32,
+	co2_offset_per_year:u32,
+}
+
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen)]
+pub struct GameToken<AccountId,BoundedString> {
+	owner: AccountId,
+	mana_cost:u32,
+	defensive_stats:u32,
+	offensive_stats:u32,
+	description:BoundedString,
+}
+
+
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen)]
+pub enum NFTStatus {
+	Suspended = 0,
+	AprovedNonAudited = 1,
+	AprovedAudited = 2,
+	Dead = 3,
+	Sick=4,
+	Recovered=5,
 }
 
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum NftType {
-	NonFungibleToken,
-	MultiToken,
+	CarbonCommon,
+	CarbonUncommom,
+	CarbonRare,
+	CarbonEpic,
+	CarbonLendary,
+	CarbonZeroCommon,
+	CarbonZeroUncommom,
+	CarbonZeroRare,
+	CarbonZeroEpic,
+	CarbonZeroLendary,
 }
 
 /// Collection info
@@ -98,7 +138,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub(super) type Tokens<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::NonFungibleTokenId, Token<T::AccountId, CollectionId,BoundedVec<u8, T::StringLimit>>>;
+		StorageMap<_, Blake2_128Concat, T::NonFungibleTokenId, Token<T::AccountId, CollectionId,NFTStatus,BoundedVec<u8, T::StringLimit>>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn next_token_id)]
@@ -111,6 +151,13 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn next_collection_id)]
 	pub(super) type NextCollectionId<T: Config> = StorageValue<_, CollectionId, ValueQuery>;
+
+	#[pallet::storage]
+	pub (super) type GameTokens<T: Config> =
+		StorageDoubleMap<_, Blake2_128Concat, T::NonFungibleTokenId,
+		Blake2_128Concat, TokenId,
+		GameToken<T::AccountId,BoundedVec<u8, T::StringLimit>>>;
+
 
 	/// The NftMaster Account similar to treasury vault
     #[pallet::storage]
@@ -247,9 +294,28 @@ pub mod pallet {
 			let treasury_acc = self.nft_master.clone();
 
 			NftMaster::<T>::put(treasury_acc.clone());
-			
-			let col_id = Pallet::<T>::do_create_collection(&treasury_acc.clone(), NftType::NonFungibleToken, &treasury_acc.clone(), "yoyo".into()).unwrap();
-			Pallet::<T>::do_create_token(&treasury_acc.clone(),col_id,  "first token".into(), "first token".into(), "first token".into());
+		
+			let col_id = Pallet::<T>::do_create_collection(
+				&treasury_acc.clone(), 
+				NftType::CarbonCommon,
+	 			&treasury_acc.clone(), 
+				"flora.finance/collections".into()
+			).unwrap();
+			Pallet::<T>::do_create_token(&treasury_acc.clone(),
+				&treasury_acc.clone(),
+				col_id,  
+				"Eucalipto".into(),
+				"o eucaplito é uma arvore que lixa o planeta".into(),
+				"PT-1337".into(),
+				"contracto_do_senhor_manel.pt".into(),
+				"contracto_do_senhor_manel.pt/insurance".into(),
+				"41.194204,-8.6286117".into(),
+				"first token".into(), "first token".into(), "first token".into(),
+				2500,
+				20
+		
+			);
+				
 			
         }
         
@@ -266,6 +332,7 @@ pub mod pallet {
 		ApprovalForAll(T::NonFungibleTokenId, T::AccountId, T::AccountId, bool),
 		CollectionCreated(CollectionId, T::AccountId),
 		CollectionDestroyed(CollectionId, T::AccountId),
+		GameTokenCreated(T::AccountId,T::NonFungibleTokenId,TokenId),
 	}
 
 	#[pallet::error]
@@ -328,14 +395,25 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn create_token(
 			origin: OriginFor<T>,
+			land_owner:T::AccountId,
 			collection:CollectionId,
+			tree_name: Vec<u8>,
+			tree_description: Vec<u8>,
+			forest_type_flag:Vec<u8>,
+			land_owner_contract:Vec<u8>,
+			land_owner_insurance_contract:Vec<u8>,
+			gps_coordinates:Vec<u8>,
 			name: Vec<u8>,
 			symbol: Vec<u8>,
 			base_uri: Vec<u8>,
+			total_trees:u32,
+			co2_offset:u32,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			Self::do_create_token(&who, collection,name, symbol, base_uri)?;
+			Self::do_create_token(&who, &land_owner,collection,tree_name,tree_description,forest_type_flag,
+				land_owner_contract,land_owner_insurance_contract,gps_coordinates,name, symbol,
+			    base_uri,total_trees,co2_offset)?;
 
 			Ok(())
 		}
@@ -433,6 +511,23 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000)]
+		pub fn mint_batch(
+			origin: OriginFor<T>,
+			id: T::NonFungibleTokenId,
+			to: T::AccountId,
+			token_id: TokenId,
+			num_of_token:u32,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+
+			ensure!(Self::has_permission(id, &who), Error::<T>::NoPermission);
+
+			Self::do_mint_batch(id, &to,num_of_token)?;
+
+			Ok(())
+		}
+
+		#[pallet::weight(10_000)]
 		pub fn burn(
 			origin: OriginFor<T>,
 			id: T::NonFungibleTokenId,
@@ -441,6 +536,21 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 
 			Self::do_burn(id, &who, token_id)?;
+
+			Ok(())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn mint_game_token(
+			origin: OriginFor<T>,
+			id: T::NonFungibleTokenId,
+			token_id: TokenId,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+
+					
+
+			Self::do_mint_game_token(who, id, token_id)?;
 
 			Ok(())
 		}
@@ -508,10 +618,19 @@ impl<T: Config> Pallet<T> {
 
 	pub fn do_create_token(
 		who: &T::AccountId,
+		land_owner:&T::AccountId,
 		collection:CollectionId,
+		tree_name: Vec<u8>,
+		tree_description: Vec<u8>,
+		forest_type_flag:Vec<u8>,
+		land_owner_contract:Vec<u8>,
+		land_owner_insurance_contract:Vec<u8>,
+		gps_coordinates:Vec<u8>,
 		name: Vec<u8>,
 		symbol: Vec<u8>,
 		base_uri: Vec<u8>,
+		total_trees:u32,
+		co2_offset:u32,
 	) -> Result<T::NonFungibleTokenId, DispatchError> {
 		let deposit = T::CreateTokenDeposit::get();
 		T::Currency::reserve(&who, deposit.clone())?;
@@ -523,6 +642,26 @@ impl<T: Config> Pallet<T> {
 		let bounded_base_uri: BoundedVec<u8, T::StringLimit> =
 			base_uri.clone().try_into().map_err(|_| Error::<T>::BadMetadata)?;
 
+		let bounded_tree_name: BoundedVec<u8, T::StringLimit> =
+			tree_name.clone().try_into().map_err(|_| Error::<T>::BadMetadata)?;
+
+		let bounded_tree_description: BoundedVec<u8, T::StringLimit> =
+			tree_description.clone().try_into().map_err(|_| Error::<T>::BadMetadata)?;
+
+		let bounded_forest_type_flag: BoundedVec<u8, T::StringLimit> =
+			forest_type_flag.clone().try_into().map_err(|_| Error::<T>::BadMetadata)?;
+
+		let bounded_land_owner_contract: BoundedVec<u8, T::StringLimit> =
+			land_owner_contract.clone().try_into().map_err(|_| Error::<T>::BadMetadata)?;
+		
+		let bounded_land_owner_insurance_contract: BoundedVec<u8, T::StringLimit> =
+			land_owner_insurance_contract.clone().try_into().map_err(|_| Error::<T>::BadMetadata)?;
+
+		let bounded_gps: BoundedVec<u8, T::StringLimit> =
+			gps_coordinates.clone().try_into().map_err(|_| Error::<T>::BadMetadata)?;
+
+		
+
 		let id = NextTokenId::<T>::try_mutate(|id| -> Result<T::NonFungibleTokenId, DispatchError> {
 			let current_id = *id;
 			*id = id.checked_add(&One::one()).ok_or(Error::<T>::NoAvailableTokenId)?;
@@ -531,12 +670,25 @@ impl<T: Config> Pallet<T> {
 
 		let token = Token {
 			owner: who.clone(),
+			land_owner: land_owner.clone(),
 			collection:collection.clone(),
+			status:NFTStatus::AprovedNonAudited,
+			tree_name:bounded_tree_name,
+			tree_description:bounded_tree_description,
+			forest_type_flag:bounded_forest_type_flag,
+			land_owner_contract:bounded_land_owner_contract,
+			land_owner_insurance_contract:bounded_land_owner_insurance_contract,
+			gps_land_coordiates:bounded_gps,
 			name: bounded_name,
 			symbol: bounded_symbol,
 			base_uri: bounded_base_uri,
+			total_trees:total_trees,
+			co2_offset_per_year:co2_offset
 		};
 
+		
+		
+		
 		Tokens::<T>::insert(id, token);
 
 		
@@ -558,7 +710,7 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::TokenNonExistent
 		);
 
-		ensure!(IsLocked::<T>::get(id,token_id)==1,Error::<T>::LockedAsset);
+		ensure!(IsLocked::<T>::get(id,token_id)==0,Error::<T>::LockedAsset);
 
 		ensure!(owner == *from, Error::<T>::NotTokenOwner);
 
@@ -628,6 +780,78 @@ impl<T: Config> Pallet<T> {
 
 		Ok(())
 	}
+
+	pub fn do_mint_batch(
+		id: T::NonFungibleTokenId,
+		to: &T::AccountId,
+		num_of_token:u32,
+	) -> DispatchResult {
+
+		let mut next_token_id=0;
+
+		for n in 0 .. num_of_token{
+			while Self::exists(id, next_token_id){
+				next_token_id+=1;
+
+			}
+			
+			Self::do_mint(id, &to, next_token_id)?;
+		}
+
+		Ok(())
+	}
+
+	pub fn do_mint_game_token(
+		who:T::AccountId,
+		id: T::NonFungibleTokenId,
+		token_id: TokenId,
+	) -> DispatchResult {
+		ensure!(
+			Self::exists(id, token_id),
+			Error::<T>::TokenNonExistent
+		);
+
+		let owner = Self::owner_of(id, token_id);
+		ensure!(who.clone()==owner,Error::<T>::NoPermission);
+
+		ensure!(IsLocked::<T>::get(id,token_id)==0,Error::<T>::LockedAsset);
+
+		//Lock nft
+		IsLocked::<T>::try_mutate(id,token_id, |lock_flag|->DispatchResult{
+				
+			*lock_flag=lock_flag.checked_add(1).ok_or(Error::<T>::Overflow)?;
+			Ok(())
+
+		})?;
+
+		let description : Vec<u8>="+1 cartas adjacentes".into();
+
+
+		let bounded_description:  BoundedVec<u8, T::StringLimit> =
+		description.try_into().map_err(|_| Error::<T>::BadMetadata)?;
+
+		let game_token = GameToken{
+			owner: who.clone(),
+			mana_cost:3,
+			defensive_stats:2,
+			offensive_stats:1,
+			description: bounded_description
+		};
+
+	
+		GameTokens::<T>::insert(id,token_id,game_token);
+		
+
+		Self::deposit_event(Event::GameTokenCreated(
+			who,
+			id,
+			token_id,
+		));
+
+		Ok(())
+	}
+
+	
 
 	pub fn do_burn(
 		id: T::NonFungibleTokenId,

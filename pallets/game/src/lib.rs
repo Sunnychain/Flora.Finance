@@ -45,7 +45,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
         /// Identifier for the class of rank token.
-		type GameId: Member  + Parameter + AtLeast32BitUnsigned + Default + Copy + MaxEncodedLen;
+		type GameRoomIndex: Member  + Parameter + AtLeast32BitUnsigned + Default + Copy + MaxEncodedLen;
 
 		/// The minimum balance to create token
 		#[pallet::constant]
@@ -66,11 +66,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub(super) type Games<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::GameId, Game<T::AccountId, T::BlockNumber,BoundedVec<u8, T::StringLimit>>>;
+		StorageMap<_, Blake2_128Concat, T::GameRoomIndex, Game<T::AccountId, T::BlockNumber,BoundedVec<u8, T::StringLimit>>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn next_token_id)]
-	pub(super) type NextGameId<T: Config> = StorageValue<_, T::GameId, ValueQuery>;
+	pub(super) type GameRoomId<T: Config> = StorageValue<_, T::GameRoomIndex, ValueQuery>;
 
 
 
@@ -78,13 +78,13 @@ pub mod pallet {
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		GameSessionCreated(T::GameId, T::AccountId),
+		GameSessionCreated(T::GameRoomIndex, T::AccountId),
 	
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		NoAvailableGameId,
+		NoAvailableGameRoomIndex,
 		Overflow,
 		Underflow,
 		TokenAlreadyMinted,
@@ -133,12 +133,12 @@ impl<T: Config> Pallet<T> {
 		player_1: T::AccountId,
         player_2: T::AccountId,
         start_block: T::BlockNumber
-	) -> Result<T::GameId, DispatchError> {
+	) -> Result<T::GameRoomIndex, DispatchError> {
 			
 		
-		let id = NextGameId::<T>::try_mutate(|id| -> Result<T::GameId, DispatchError> {
+		let id = GameRoomId::<T>::try_mutate(|id| -> Result<T::GameRoomIndex, DispatchError> {
 			let current_id = *id;
-			*id = id.checked_add(&One::one()).ok_or(Error::<T>::NoAvailableGameId)?;
+			*id = id.checked_add(&One::one()).ok_or(Error::<T>::NoAvailableGameRoomIndex)?;
 			Ok(current_id)
 		})?;
 

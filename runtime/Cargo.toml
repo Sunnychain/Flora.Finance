@@ -22,6 +22,18 @@ default-features = false
 path = '../pallets/utils'
 version = '3.0.0-monthly-2021-09+1'
 
+
+[dependencies.pallet-game-room]
+default-features = false
+path = '../pallets/game-room'
+version = '3.0.0-monthly-2021-09+1'
+
+
+[dependencies.pallet-profile]
+default-features = false
+path = '../pallets/profile'
+version = '3.0.0-monthly-2021-09+1'
+
 [dependencies.simple-crowdfund]
 default-features = false
 path = '../pallets/simple-crowdfund'
@@ -136,6 +148,7 @@ default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
+
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
@@ -302,5 +315,6 @@ std = [
     'orml-auction/std',
     'pallet-nft-market/std',
     'simple-crowdfund/std',
+    'pallet-profile/std',
         
 ]

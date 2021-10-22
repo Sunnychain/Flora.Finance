@@ -343,6 +343,12 @@ impl pallet_utils::Config  for Runtime {
 	
 }
 
+impl pallet_profile::Config  for Runtime {
+	type Event = Event;
+	
+	
+}
+
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -363,6 +369,7 @@ construct_runtime!(
 		TokenNonFungible: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>},
 		CrowdFund: simple_crowdfund::{Pallet, Call, Storage, Event<T>},
 		UtilsModule: pallet_utils::{Pallet,Config<T>,Storage,Event<T>},
+		Profile: pallet_profile::{Pallet,Call,Storage,Event<T>},
 	}
 );
 

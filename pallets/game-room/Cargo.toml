@@ -1,18 +1,24 @@
 [package]
-name = "pallet-utils"
-version = "3.0.0-monthly-2021-09+1"
-authors = ["Web3Games Developers"]
-edition = "2018"
-
+authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
+description = 'FRAME pallet template for defining custom runtime logic.'
+edition = '2018'
+homepage = 'https://substrate.dev'
+license = 'Unlicense'
+name = 'pallet-game-room'
+publish = false
+readme = 'README.md'
+repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
+version = '3.0.0-monthly-2021-09+1'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
-[dev-dependencies.sp-core]
+[dependencies.sp-core]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
+
 
 [dev-dependencies.sp-io]
 default-features = false
@@ -27,12 +33,6 @@ tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
 
 [dependencies.sp-std]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-09+1'
-version = '4.0.0-dev'
-
-[dependencies.pallet-timestamp]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
@@ -74,6 +74,7 @@ optional = true
 version = '1.0.124'
 
 
+[dependencies]
 
 
 [features]
@@ -88,7 +89,6 @@ std = [
     "sp-runtime/std",
     'sp-std/std',
     'pallet-balances/std',
-    'pallet-timestamp/std',
-    
+    'sp-core/std'
 ]
 try-runtime = ['frame-support/try-runtime']

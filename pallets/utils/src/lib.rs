@@ -14,7 +14,6 @@ use serde::Deserialize;
 
 
 
-use primitives::{TokenId, TokenIndex};
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, One, CheckedAdd},
 	RuntimeDebug,
@@ -40,7 +39,7 @@ pub enum Content {
 impl From<Content> for Vec<u8> {
     fn from(content: Content) -> Vec<u8> {
         match content {
-            Content::None => vec![],
+            Content::None => Vec::<u8>::new(),
             Content::Raw(vec_u8) => vec_u8,
             Content::IPFS(vec_u8) => vec_u8,
             Content::Hyper(vec_u8) => vec_u8,

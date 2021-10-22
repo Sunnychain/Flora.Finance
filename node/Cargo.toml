@@ -24,6 +24,8 @@ version = '3.0.0'
 [dependencies]
 jsonrpc-core = '18.0.0'
 structopt = '0.3.8'
+pallet-nft = { default-features = false, path = "../pallets/nfts" }
+
 
 [dependencies.node-template-runtime]
 path = '../runtime'
@@ -166,6 +168,8 @@ version = '4.0.0-dev'
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
+
+
 
 [features]
 default = []

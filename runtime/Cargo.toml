@@ -16,6 +16,63 @@ default-features = false
 path = '../pallets/template'
 version = '3.0.0-monthly-2021-09+1'
 
+
+[dependencies.pallet-utils]
+default-features = false
+path = '../pallets/utils'
+version = '3.0.0-monthly-2021-09+1'
+
+
+[dependencies.pallet-game-room]
+default-features = false
+path = '../pallets/game-room'
+version = '3.0.0-monthly-2021-09+1'
+
+
+[dependencies.pallet-profile]
+default-features = false
+path = '../pallets/profile'
+version = '3.0.0-monthly-2021-09+1'
+
+[dependencies.simple-crowdfund]
+default-features = false
+path = '../pallets/simple-crowdfund'
+version = '3.0.0-monthly-2021-09+1'
+
+[dependencies.pallet-tournament]
+default-features = false
+path = '../pallets/tournament'
+version = '3.0.0-monthly-2021-09+1'
+
+
+[dependencies.pallet-token-fungible]
+default-features = false
+path = '../pallets/fungible'
+version = '3.0.0-monthly-2021-09+1'
+
+[dependencies.lockable-currency]
+default-features = false
+path = '../pallets/lockable-currency'
+version = '3.0.0-monthly-2021-09+1'
+
+[dependencies.pallet-nft]
+default-features = false
+path = '../pallets/nfts'
+version = '3.0.0-monthly-2021-09+1'
+
+
+
+[dependencies.pallet-game]
+default-features = false
+path = '../pallets/game'
+version = '3.0.0-monthly-2021-09+1'
+
+[dependencies.pallet-nft-market]
+default-features = false
+path = '../pallets/nft-market'
+version = '3.0.0-monthly-2021-09+1'
+
+
 [build-dependencies.substrate-wasm-builder]
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
@@ -67,7 +124,12 @@ version = '4.0.0-dev'
 
 [dependencies.hex-literal]
 optional = true
-version = '0.3.1'
+version = '0.3.3'
+
+[dependencies.hex]
+optional = true
+version = '0.4.3'
+
 
 [dependencies.pallet-aura]
 default-features = false
@@ -86,6 +148,7 @@ default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
+
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
@@ -183,6 +246,29 @@ git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
 
+[dependencies.serde]
+optional = true
+version = '1.0.124'
+
+[dependencies.orml-nft]
+default-features = false
+git = 'https://github.com/open-web3-stack/open-runtime-module-library.git'
+branch = "master"
+
+[dependencies.orml-traits]
+default-features = false
+git = 'https://github.com/open-web3-stack/open-runtime-module-library.git'
+branch = "master"
+
+[dependencies.orml-auction]
+default-features = false
+git = 'https://github.com/open-web3-stack/open-runtime-module-library.git'
+branch = "master"
+
+[dependencies]
+primitives = { default-features = false, path = "../primitives" }
+
+
 [features]
 default = ['std']
 runtime-benchmarks = [
@@ -197,6 +283,7 @@ runtime-benchmarks = [
     'sp-runtime/runtime-benchmarks',
 ]
 std = [
+    "serde",
     'codec/std',
     'frame-executive/std',
     'frame-support/std',
@@ -222,4 +309,12 @@ std = [
     'sp-std/std',
     'sp-transaction-pool/std',
     'sp-version/std',
+	"orml-nft/std",
+    "pallet-nft/std",
+    'pallet-utils/std',
+    'orml-auction/std',
+    'pallet-nft-market/std',
+    'simple-crowdfund/std',
+    'pallet-profile/std',
+        
 ]

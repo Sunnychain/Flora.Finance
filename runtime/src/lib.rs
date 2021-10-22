@@ -6,18 +6,30 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+
+
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{H256, OpaqueMetadata, crypto::KeyTypeId,sr25519};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature,
 };
+/// Constant values used within the runtime.
+mod constants;
+pub use constants::{currency::*, time::*};
+
+pub use primitives::{
+	AccountId, AccountIndex, Amount, Balance, BlockNumber, CurrencyId, Hash, Index, Moment,
+	Signature, TokenSymbol,
+};
+
+
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -31,10 +43,11 @@ pub use frame_support::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		IdentityFee, Weight,
 	},
-	StorageValue,
+	StorageValue,PalletId,
 };
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
+
 use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -43,24 +56,6 @@ pub use sp_runtime::{Perbill, Permill};
 /// Import the template pallet.
 pub use pallet_template;
 
-/// An index to a block.
-pub type BlockNumber = u32;
-
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Index of a transaction in the chain.
-pub type Index = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -266,10 +261,94 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
-/// Configure the pallet-template in pallets/template.
-impl pallet_template::Config for Runtime {
-	type Event = Event;
+
+parameter_types! {
+	pub const CreateTokenDeposit: Balance = 500 * MILLICENTS;
+	pub const CreatePoolDeposit: Balance = 500 * MILLICENTS;
+	pub const CreateCollectionDeposit: Balance = 500 * MILLICENTS;
+	pub const CreateCurrencyInstanceDeposit: Balance = 500 * MILLICENTS;
+	pub const MinimumAuctionAliveTime : BlockNumber = 5 * MINUTES ;
 }
+
+
+
+parameter_types! {
+	pub const TokenFungiblePalletId: PalletId = PalletId(*b"w3g/tofm");
+	pub const TokenNonFungiblePalletId: PalletId = PalletId(*b"w3g/tonf");
+	pub const TokenMultiPalletId: PalletId = PalletId(*b"w3g/tomm");
+	pub const WrapCurrencyPalletId: PalletId = PalletId(*b"w3g/wrap");
+	pub const PoolPalletId: PalletId = PalletId(*b"w3g/pool");
+	pub const NftPoolPalletId: PalletId = PalletId(*b"w3g/nftp");
+	pub const UtilsPalletId: PalletId = PalletId(*b"UtilsAcc");
+	pub ZeroAccountId: AccountId = AccountId::from([0u8; 32]);
+	pub const StringLimit: u32 = 50;
+	pub const CarbonZeroId : u64 = 0 ;
+	pub const CarbonZeroRareId : u64 = 1 ;
+	pub const CarbonZeroEpicId : u64 = 2 ;
+	pub const CarbonZeroLegendaryId : u64 = 3 ;
+	
+	//pub NftMaster: AccountId = AccountId::from_ss58check("d6c71059dbbe9ad2b0ed3f289738b800836eb425544ce694825285b958ca755e").unwrap();
+	//pub const NftMaster: AccountId=AccountId::from(b"d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d");
+	
+	
+}
+
+
+
+impl pallet_nft_market::Config for Runtime {
+	type Event = Event;
+	
+	// in hours
+	type MinimumAuctionAliveTime = MinimumAuctionAliveTime;
+	
+}
+
+impl pallet_nft::Config for Runtime {
+	type Event = Event;
+	type PalletId = TokenNonFungiblePalletId;
+	type NonFungibleTokenId = u32;
+	type StringLimit = StringLimit;
+	type CreateTokenDeposit = CreateTokenDeposit;
+	type CreateCollectionDeposit = CreateCollectionDeposit;
+	type Currency = Balances;
+	type CarbonZeroId = CarbonZeroId;
+	type CarbonZeroRareId = CarbonZeroRareId  ;
+	type CarbonZeroEpicId =  CarbonZeroEpicId ;
+	type CarbonZeroLegendaryId =  CarbonZeroLegendaryId ;
+	
+}
+
+
+// Crowdfunding pallet
+parameter_types! {
+	pub const SubmissionDeposit: u128 = 10;
+	pub const MinContribution: u128 = 10;
+	pub const RetirementPeriod: u32 = 10;
+}
+
+/// Configure the pallet-template in pallets/template.
+impl simple_crowdfund::Config for Runtime {
+	type Event = Event;
+
+	type Currency = Balances;
+	type SubmissionDeposit = SubmissionDeposit;
+	type MinContribution = MinContribution;
+	type RetirementPeriod = RetirementPeriod;
+}
+
+impl pallet_utils::Config  for Runtime {
+	type Event = Event;
+	type PalletId = UtilsPalletId;
+	type Currency = Balances;
+	
+}
+
+impl pallet_profile::Config  for Runtime {
+	type Event = Event;
+	
+	
+}
+
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -286,8 +365,11 @@ construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		// Include the custom logic from the pallet-template in the runtime.
-		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
+		NftMarket: pallet_nft_market::{Pallet, Call, Storage, Event<T>},
+		TokenNonFungible: pallet_nft::{Pallet, Call, Config<T>, Storage, Event<T>},
+		CrowdFund: simple_crowdfund::{Pallet, Call, Storage, Event<T>},
+		UtilsModule: pallet_utils::{Pallet,Config<T>,Storage,Event<T>},
+		Profile: pallet_profile::{Pallet,Call,Storage,Event<T>},
 	}
 );
 

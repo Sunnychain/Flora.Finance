@@ -4,7 +4,7 @@ description = 'FRAME pallet template for defining custom runtime logic.'
 edition = '2018'
 homepage = 'https://substrate.dev'
 license = 'Unlicense'
-name = 'pallet-template'
+name = 'pallet-nft'
 publish = false
 readme = 'README.md'
 repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
@@ -68,11 +68,27 @@ git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
 
+[dependencies.serde]
+optional = true
+version = '1.0.124'
+
+[dependencies.orml-nft]
+default-features = false
+git = 'https://github.com/open-web3-stack/open-runtime-module-library.git'
+branch = "master"
+
+
+[dependencies]
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master", default-features = false }
+primitives = { default-features = false, path = "../../primitives" }
+pallet-utils= { default-features = false, path = "../utils" }
+
 
 [features]
 default = ['std']
 runtime-benchmarks = ['frame-benchmarking']
 std = [
+    "serde",
     'codec/std',
     'frame-support/std',
     'frame-system/std',
@@ -80,5 +96,10 @@ std = [
     "sp-runtime/std",
     'sp-std/std',
     'pallet-balances/std',
+    "orml-traits/std",
+	"orml-nft/std",
+    "sp-core/std",
+    'pallet-utils/std',
+    
 ]
 try-runtime = ['frame-support/try-runtime']

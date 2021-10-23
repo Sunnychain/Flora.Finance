@@ -333,6 +333,7 @@ pub mod pallet {
 		CollectionCreated(CollectionId, T::AccountId),
 		CollectionDestroyed(CollectionId, T::AccountId),
 		GameTokenCreated(T::AccountId,T::NonFungibleTokenId,TokenId),
+		GameTokenBurnt(T::AccountId,T::NonFungibleTokenId,TokenId),
 	}
 
 	#[pallet::error]
@@ -536,6 +537,19 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 
 			Self::do_burn(id, &who, token_id)?;
+
+			Ok(())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn burn_game_token(
+			origin: OriginFor<T>,
+			id: T::NonFungibleTokenId,
+			token_id: TokenId,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+
+			Self::do_burn_game_token(id, &who, token_id)?;
 
 			Ok(())
 		}
@@ -851,6 +865,35 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	pub fn do_burn_game_token(
+		id: T::NonFungibleTokenId,
+		account: &T::AccountId,
+		token_id: TokenId,
+	) -> DispatchResult {
+		let owner = Self::owner_of(id, token_id);
+		ensure!(
+			owner != T::AccountId::default(),
+			Error::<T>::TokenNonExistent
+		);
+		ensure!(*account == owner, Error::<T>::NotTokenOwner);
+
+		ensure!(GameTokens::<T>::contains_key(id, token_id),Error::<T>::TokenNonExistent);
+
+		GameTokens::<T>::remove(id, token_id);
+
+		Self::unlock_nft(id, token_id);
+		
+
+		Self::deposit_event(Event::GameTokenBurnt(
+			who,
+			id,
+			token_id,
+		));
+
+		Ok(())
+	}
+
+
 	
 
 	pub fn do_burn(
@@ -997,4 +1040,39 @@ impl<T: Config> Pallet<T> {
 
 		Ok(())
 	}
+
+
+	fn lock_nft(
+		id: T::NonFungibleTokenId,
+		token_id: TokenId,
+	) -> DispatchResult {
+		//Lock nft
+		IsLocked::<T>::try_mutate(id,token_id, |lock_flag|->DispatchResult{
+			
+			ensure!(lock_flag == 0,Error::<T>::LockedAsset);
+
+			*lock_flag=lock_flag.checked_add(1).ok_or(Error::<T>::Overflow)?;
+			Ok(())
+
+		})
+			
+	}
+
+	fn unlock_nft(
+		id: T::NonFungibleTokenId,
+		token_id: TokenId,
+	) -> DispatchResult {
+		//unLock nft
+		IsLocked::<T>::try_mutate(id,token_id, |lock_flag|->DispatchResult{
+			
+			ensure!(lock_flag == 1,Error::<T>::LockedAsset);
+
+			*lock_flag=lock_flag.checked_sub(1).ok_or(Error::<T>::Overflow)?;
+			Ok(())
+
+		})
+			
+	}
+
+
 }

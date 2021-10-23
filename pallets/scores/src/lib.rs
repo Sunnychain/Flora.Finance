@@ -18,20 +18,22 @@ use sp_std::{convert::TryInto, prelude::*};
 
 use pallet_utils::{Pallet as Utils, WhoAndWhen, Content};
 
+use pallet_profile::{Pallet as Profile}
+
 #[derive(Encode, Decode, Clone, Copy, Eq, PartialEq, RuntimeDebug)]
 pub enum ScoringAction {
-	CreateComment,
-    ShareComment,
-	CreateRoom,
-	WinGame,
-    WatchGame,
-	WatchPayGame,
-    FollowAccount,
-	AcquireCommomNFT,
-	AcquireUncommomNFT,
-	AcquireRareNFT,
-	AcquireEpicNFT,
-	AcquireLendaryNFT,
+	CreateComment=1,
+    ShareComment=2,
+	CreateRoom=3,
+	WinGame=4,
+    WatchGame=5,
+	WatchPayGame=6,
+    FollowAccount=7,
+	AcquireCommomNFT=8,
+	AcquireUncommomNFT=9,
+	AcquireRareNFT=10,
+	AcquireEpicNFT=11,
+	AcquireLendaryNFT=12,
 	
 }
 
@@ -116,6 +118,18 @@ pub mod pallet {
 
 
 impl<T: Config> Pallet<T> {
+
+	pub fn action_performed(
+		acc: T::AccountId,
+        profile: Profile,
+        action: ScoringAction,
+    ) -> u64 {
+		let who = ensure_signed(acc)?;
+      
+    }
+
+
+
 
    
 

@@ -93,9 +93,9 @@ export default function Content () {
         <h5>in Comming</h5>
 
         <div className="row">
-          <div className="col-xs-12 col-sm-3 col-md-3 col-lg-3">
-            <div className="card rounded-0 p-0 shadow-sm box-img ">
-
+          <div className="col-xs-12 col-sm-12 col-md-12 col-lg-12"
+          style={{ marginBottom: '25px' }}>
+            <div className="card rounded-0 p-0 shadow-sm box-img farms">
               <div className="card-body text-center">
                 <h3 className="card-title">Farms & Staking</h3>
                 <h4>Flora to Harvest:</h4>
@@ -109,9 +109,8 @@ export default function Content () {
 
             </div>
           </div>
-          <div className="col-xs-12 col-sm-5 col-md-5 col-lg-5">
-            <div className="card rounded-0 p-0 shadow-sm box-img">
-
+          <div className="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+            <div className="card rounded-0 p-0 shadow-sm box-img flora">
               <div className="card-body text-center">
                 <h3 className="card-title">FLORA Deflationary</h3>
                 <h4> Total Minted: <b>0</b></h4>
@@ -124,8 +123,8 @@ export default function Content () {
 
             </div>
           </div>
-          <div className="col-xs-12 col-sm-4 col-md-4 col-lg-4">
-            <div className="card rounded-0 p-0 shadow-sm box-img">
+          <div className="col-xs-12 col-sm-6 col-md-6 col-lg-6">
+            <div className="card rounded-0 p-0 shadow-sm box-img capped">
 
               <div className="card-body text-center">
                 <h3 className="card-title"> POLEN capped</h3>

@@ -1,7 +1,34 @@
 .box-img {
-
-    background-image: url('../images/world.gif');
     background-size: cover;
     background-position: center;
-    
+}
+
+.flora {
+    background-image: url("../images/tree.png");
+    opacity: 1;
+    h3,
+    h4 {
+        font-size: 23px;
+        font-family: "Poppins", sans-serif;
+    }
+}
+
+.capped {
+    background-image: url("../images/min_Flora.png");
+    opacity: 1;
+    h3,
+    h4 {
+        font-size: 23px;
+        font-family: "Poppins", sans-serif;
+    }
+}
+
+.farms {
+    background-image: url("../images/style-flr.png");
+    opacity: 1;
+    h3,
+    h4 {
+        font-size: 10px;
+        font-family: "Poppins", sans-serif;
+    }
 }

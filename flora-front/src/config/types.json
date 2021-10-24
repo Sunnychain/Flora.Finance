@@ -1,56 +1,132 @@
 {
-    "TokenId": "u64",
-    "TokenIndex": "u32",
-    "InstanceId": "u64",
-    "ExchangeId": "u32",
-    "NonFungibleTokenId": "u32",
-    "Collection": {
-      "owner": "AccountId",
-      "nft_type": "NftType",
-      "nft_account": "AccountId",
-      "metadata": "Vec<u8>"
-    },
-    "Token": {
-      "owner": "AccountId",
-      "name": "BoundedString",
-      "symbol": "BoundedString",
-      "base_uri": "BoundedString"
-    },
-     "Sale": {
-      "owner": "AccountId",
-      "collection": "CollectionId",
-      "nft_id": "NonFungibleTokenId",
-      "token_id": "TokenId",
-      "price": "BalanceOf"
-    },
-     "Bid": {
-      "bidder": "AccountId",
-      "collection": "CollectionId",
-      "nft_id": "NonFungibleTokenId",
-      "token_id": "TokenId",
-      "offer": "BalanceOf"
-    },
-    "TokenSymbol": {
-      "_enum": {
-        "W3G": 0,
-        "DOT": 1,
-        "ACA": 2,
-        "AUSD": 3
-      }
-    },
-    "NftType": {
-      "_enum": {
-        "NonFungibleToken": 0,
-        "MultiToken": 1
-      }
-    },
-    "CurrencyId": {
-      "_enum": {
-        "Token": "TokenSymbol"
-      }
-    },
-    "CurrencyIdOf": "CurrencyId",
-    "CollectionId": "u64",
-    "AssetId": "64"
-  }
-  
+  "TokenId": "u64",
+  "TokenIndex": "u32",
+  "InstanceId": "u64",
+  "ExchangeId": "u32",
+  "NonFungibleTokenId": "u32",
+  "Collection": {
+    "owner": "AccountId",
+    "nft_type": "NftType",
+    "nft_account": "AccountId",
+    "metadata": "Vec<u8>"
+  },
+  "Token": {
+    "owner": "AccountId",
+    "land_owner": "AccountId",
+    "collection": "CollectionId",
+    "status": "NFTStatus",
+    "tree_name": "Vec<u8>",
+    "tree_description": "Vec<u8>",
+    "forest_type_flag": "Vec<u8>",
+    "land_owner_contract": "Vec<u8>",
+    "land_owner_insurance_contract": "Vec<u8>",
+    "gps_land_coordiates": "Vec<u8>",
+    "name": "Vec<u8>",
+    "symbol": "Vec<u8>",
+    "base_uri": "Vec<u8>",
+    "total_trees": "u32",
+    "co2_offset_per_year": "u32"
+  },
+  "GameToken": {
+    "owner": "AccountId",
+    "mana_cost": "u32",
+    "defensive_stats": "u32",
+    "offensive_stats": "u32",
+    "description": "Vec<u8>"
+  },
+  "Sale": {
+    "owner": "AccountId",
+    "collection": "CollectionId",
+    "nft_id": "NonFungibleTokenId",
+    "token_id": "TokenId",
+    "price": "BalanceOf"
+  },
+  "SocialAccount": {
+    "followers_count": "u32",
+    "following_accounts_count": "u16",
+    "following_spaces_count": "u16",
+    "reputation": "u32",
+    "profile": "Option<Profile>"
+  },
+  "ProfileHistoryRecord": {
+    "edited": "WhoAndWhen",
+    "old_data": "ProfileUpdate"
+  },
+  "ProfileUpdate": {
+    "content": "Option<Content>"
+  },
+  "WhoAndWhen": {
+    "account": "AccountId",
+    "block": "BlockNumber",
+    "time": "Moment"
+  },
+  "Profile": {
+    "created": "WhoAndWhen",
+    "updated": "Option<WhoAndWhen>",
+    "content": "Content"
+  },
+  "Auction": {
+    "owner": "AccountId",
+    "nft_id": "NonFungibleTokenId",
+    "token_id": "TokenId",
+    "current_price": "BalanceOf",
+    "num_bid": "u64",
+    "last_bidder": "AccountId",
+    "end_block": "BlockNumber"
+  },
+  "Bid": {
+    "bidder": "AccountId",
+    "collection": "CollectionId",
+    "nft_id": "NonFungibleTokenId",
+    "token_id": "TokenId",
+    "offer": "BalanceOf"
+  },
+  "TokenSymbol": {
+    "_enum": {
+      "W3G": 0,
+      "DOT": 1,
+      "ACA": 2,
+      "AUSD": 3
+    }
+  },
+  "NFTStatus": {
+    "_enum": {
+      "Suspended": 0,
+      "AprovedNonAudited": 1,
+      "AprovedAudited": 2,
+      "Dead": 3,
+      "Sick": 4,
+      "Recovered": 5
+    }
+  },
+  "NftType": {
+    "_enum": {
+      "CarbonCommon": 0,
+      "CarbonUncommom": 1,
+      "CarbonRare": 2,
+      "CarbonEpic": 3,
+      "CarbonLendary": 4,
+      "CarbonZeroCommon": 5,
+      "CarbonZeroUncommom": 6,
+      "CarbonZeroRare": 7,
+      "CarbonZeroEpic": 8,
+      "CarbonZeroLendary": 9
+    }
+  },
+  "CurrencyId": {
+    "_enum": {
+      "Token": "TokenSymbol"
+    }
+  },
+  "Content": {
+    "_enum": [
+      "None",
+      "Raw(Vec<u8>)",
+      "IPFS(Vec<u8>)",
+      "Hyper(Vec<u8>)"
+    ]
+  },
+  "CurrencyIdOf": "CurrencyId",
+  "CollectionId": "u64",
+  "AssetId": "64"
+}

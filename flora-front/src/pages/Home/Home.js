@@ -5,6 +5,8 @@ import { RiHandHeartLine } from 'react-icons/ri';
 import { GiBuyCard } from 'react-icons/gi';
 import Content from '../../components/Content/Content';
 import Wallet from '../../wallet/main';
+import Min from '../../images/min_Flora-black.png';
+import farms from '../../images/style-flor-black.png';
 import $ from 'jquery';
 import './Home.scss';
 
@@ -47,17 +49,13 @@ export default function Home () {
       <div className="accountHeader">
         <nav>
           <ul className="nav justify-content-end">
+
             <li className="nav-item">
-              <Link className="nav-link active" to="#">Active</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="#">Link</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="#">Link</Link>
-            </li>
-            <li className="nav-item">
-              <Wallet />
+              {
+                window.location.pathname === '/market'
+                  ? <Wallet />
+                  : ''
+               }
             </li>
           </ul>
         </nav>
@@ -92,8 +90,8 @@ export default function Home () {
                   <span>General</span>
                 </li>
                 <li>
-                  <Link to='#'>
-                    <i className='fa fa-home'></i>
+                  <Link to='/'>
+                    <i className='fa'><img src={Min} alt="home"/></i>
                     <span>Home</span>
                   </Link>
                 </li>
@@ -121,13 +119,13 @@ export default function Home () {
                 </li>
                 <li>
                   <Link to='#'>
-                    <i className='fa fa-calendar'></i>
+                  <i className='fa'><img src={farms} alt="staking"/></i>
                     <span>Staking</span>
                   </Link>
                 </li>
 
                 <li>
-                  <Link to='#'>
+                  <Link to='/market'>
                     <i className='fa '><MdCollectionsBookmark /></i>
                     <span>NFTS</span>
                   </Link>
@@ -178,13 +176,28 @@ export default function Home () {
               </ul>
             </div>
           </div>
-
-          {
-            window.location.pathname === '/' ? '' : ''
-          }
-
+          <div class="sidebar-footer">
+      <Link to="#">
+        <i class="fa fa-bell"></i>
+        <span class="badge badge-pill badge-warning notification">0</span>
+      </Link>
+      <Link to="#">
+        <i class="fa fa-envelope"></i>
+        <span class="badge badge-pill badge-success notification">0</span>
+      </Link>
+      <Link to="#">
+        <i class="fa fa-cog"></i>
+        <span class="badge-sonar"></span>
+      </Link>
+      <Link to="#">
+        <i class="fa fa-power-on"></i>
+      </Link>
+    </div>
         </nav>
-        <Content />
+        {
+          window.location.pathname === '/' || window.location.pathname === 'home' ? <Content /> : ''
+        }
+
       </div>
     </main>
 

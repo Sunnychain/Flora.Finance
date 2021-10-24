@@ -44,6 +44,43 @@ body {
   font-size: 0.9rem;
   font-family: "Poppins", sans-serif;;
 }
+
+.sidebar-footer {
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  display: flex;
+}
+
+.sidebar-footer > a {
+  flex-grow: 1;
+  text-align: center;
+  height: 30px;
+  line-height: 30px;
+  position: relative;
+}
+
+.sidebar-footer > a .notification {
+  position: absolute;
+  top: 0;
+}
+
+.fa {
+  img {
+    width: 50px;
+    margin-left: -10px;
+    &:hover {
+      -webkit-transition: all 0.3s ease;
+      -moz-transition: all 0.3s ease;
+      -ms-transition: all 0.3s ease;
+      -o-transition: all 0.3s ease;
+      transition: all 0.3s ease;
+      width: 62px;
+      margin-top: -3px;
+      margin-left: -16px;
+    }
+  }
+}
 .page-wrapper .sidebar-wrapper,
 .sidebar-wrapper .sidebar-brand > a,
 .sidebar-wrapper .sidebar-dropdown > a:after,
@@ -404,7 +441,7 @@ body {
 
 .chiller-theme .sidebar-wrapper {
   //corpo
-  background: white;
+  background: #ffffff;
 }
 
 .chiller-theme .sidebar-wrapper .sidebar-header,
@@ -435,22 +472,22 @@ body {
 .chiller-theme .sidebar-wrapper .sidebar-header .user-info,
 .chiller-theme .sidebar-wrapper .sidebar-brand > a:hover,
 .chiller-theme .sidebar-footer > a:hover i {
-  color: blue;
+  color: red;
 }
 
 .page-wrapper.chiller-theme.toggled #close-sidebar {
-  color: black;
+  color: green;
 }
 
 .page-wrapper.chiller-theme.toggled #close-sidebar:hover {
-  color: blue;
+  color: green;
 }
 
 .chiller-theme .sidebar-wrapper ul li:hover a i,
 .chiller-theme .sidebar-wrapper .sidebar-dropdown .sidebar-submenu li a:hover:before,
 .chiller-theme .sidebar-wrapper .sidebar-search input.search-menu:focus + span,
 .chiller-theme .sidebar-wrapper .sidebar-menu .sidebar-dropdown.active a i {
-  color: red;
+  color: green;
   text-shadow: 0px 0px 10px rgba(22, 199, 255, 0.5);
 }
 
@@ -458,7 +495,8 @@ body {
 .chiller-theme .sidebar-wrapper .sidebar-menu .sidebar-dropdown div,
 .chiller-theme .sidebar-wrapper .sidebar-search input.search-menu,
 .chiller-theme .sidebar-wrapper .sidebar-search .input-group-text {
-  background: #79F868;
+  background: #f2f2f2;
+
 }
 
 .chiller-theme .sidebar-wrapper .sidebar-menu .header-menu span {
@@ -466,7 +504,7 @@ body {
 }
 
 .chiller-theme .sidebar-footer {
-  background: red;
+  background: green;
   box-shadow: 0px -1px 5px #282c33;
   border-top: 1px solid #464a52;
 }

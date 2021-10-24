@@ -19,7 +19,7 @@ function Main (props) {
   }));
 
   const initialAddress =
-    keyringOptions.length > 0 ? keyringOptions[0] = '' : '5H1ayV6PV7DNc4dwcRJzB6zQGxGEeQfi139hS55nKVhBu5FJ';
+  keyringOptions.length > 0 ? keyringOptions[0].value : '';
 
   // Set the initial address
   useEffect(() => {

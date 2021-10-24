@@ -29,8 +29,9 @@ export default function Main () {
         <Container>
           <Grid stackable columns='equal'>
             <Grid.Row>
+            <Events />
               <Interactor accountPair={accountPair} />
-              <Events />
+
             </Grid.Row>
           </Grid>
         </Container>

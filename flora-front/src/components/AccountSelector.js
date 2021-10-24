@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import MainWallet from '../wallet/main';
+
 import { useSubstrate } from '../substrate-lib';
 import { Menu, Button, Dropdown, Container, Icon, Image, Label } from 'semantic-ui-react';
 import flora from '../images/flora.svg';
@@ -35,7 +35,6 @@ function Main (props) {
 
   return (
     <main>
-<MainWallet/>
       <Menu
         attached='top'
         tabular

@@ -5,6 +5,7 @@ import { DeveloperConsole } from '../substrate-lib/components';
 import AccountSelector from '../components/AccountSelector';
 import Events from '../components/Events';
 import Interactor from '../components/Interactor';
+import CreateAuction from '../components/createAuction/NewAuction';
 import { message, loader } from './status';
 import 'semantic-ui-css/semantic.min.css';
 
@@ -25,13 +26,13 @@ export default function Main () {
       <div ref={contextRef}>
         <Sticky context={contextRef}>
         <AccountSelector setAccountAddress={setAccountAddress} />
+        <CreateAuction setAccountAddress={setAccountAddress} accountPair={accountPair} />
         </Sticky>
         <Container>
           <Grid stackable columns='equal'>
             <Grid.Row>
             <Events />
-              <Interactor accountPair={accountPair} />
-
+              <Interactor/>
             </Grid.Row>
           </Grid>
         </Container>

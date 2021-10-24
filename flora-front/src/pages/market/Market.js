@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import Wallet from '../../wallet/main';
 import logo from '../../images/flora.svg';
 import example from '../../images/example.jpeg';
-import CreateAuction from '../../components/createAuction/NewAuction';
 
 import './market.scss';
 

@@ -40,10 +40,38 @@
     opacity: 0;
   }
 }
+
+@keyframes pulse {
+	0% {
+		transform: scale(0.95);
+		box-shadow: 0 0 0 0 #00802b;
+	}
+
+	70% {
+		transform: scale(1);
+		box-shadow: 0 0 0 10px #00b33c;
+	}
+
+	100% {
+		transform: scale(0.95);
+		box-shadow: 0 0 0 0 #00e64d;
+	}
+}
+
+
 body {
   font-size: 0.9rem;
   font-family: "Poppins", sans-serif;
 }
+
+.openMenu {
+	border-radius: 50%;
+	box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
+	transform: scale(1);
+  animation: pulse 2s infinite;
+ 
+}
+
 
 .sidebar-footer {
   position: absolute;

@@ -142,8 +142,7 @@ export default function Content () {
         <div className="row" style={{ marginTop: '15px' }}>
           <div className="col-xs-12 col-sm-12 col-md-12 col-lg-12">
             <div className="card rounded-0 p-0 shadow-sm box-img">
-
-              <div className="card-body text-center">
+              <div className="card-body text-center oghan">
                 <h1 className="card-title"> Next Battle In:</h1>
                 <h4><b>00:00</b> </h4>
                 <Link to="#" target="_blank" className="btn btn-primary btn-lg" rel="noreferrer">Go</Link>

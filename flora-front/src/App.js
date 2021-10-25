@@ -4,6 +4,7 @@ import Main from './middlewares/Main';
 import Home from './pages/Home/Home';
 import About from './pages/About/About';
 import Market from './pages/market/Market';
+import Contact from './pages/Contact/Contact';
 import { SubstrateContextProvider } from './substrate-lib';
 export default function App () {
   return (
@@ -21,6 +22,9 @@ export default function App () {
           </Route>
           <Route path="/about" exact>
             <About />
+          </Route>
+          <Route path="/contact" exact>
+            <Contact />
           </Route>
         </Switch>
       </Router>

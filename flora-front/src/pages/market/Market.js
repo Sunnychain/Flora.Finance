@@ -10,7 +10,7 @@ function Market () {
   return (
     <div id="mainWrapper">
       <header>
-        <div id="logo"><img src={logo} alt="logo"/></div>
+        <div id="logo"><Link to="/" ><img src={logo} alt="logo"/></Link></div>
         <div id="headerLinks"><Wallet /></div>
       </header>
       <section id="offer">

@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import $ from 'jquery';
-import Wallet from '../../wallet/main';
 import Min from '../../images/min_Flora-black.png';
 import farms from '../../images/style-flor-black.png';
 import { MdCollectionsBookmark } from 'react-icons/md';
@@ -37,6 +36,7 @@ function SideBar () {
       $('.page-wrapper').addClass('toggled');
     });
   }
+
   useEffect(() => {
     renderSizer();
   }, []);
@@ -50,7 +50,6 @@ function SideBar () {
             </div>
           </div>
           <div className='sidebar-search'>
-
             <div className='input-group'>
               <input type='text' className='form-control search-menu' placeholder='Search...' />
               <div className='input-group-append'>
@@ -59,7 +58,6 @@ function SideBar () {
                 </span>
               </div>
             </div>
-
           </div>
           <div className='sidebar-menu'>
             <ul>
@@ -83,7 +81,7 @@ function SideBar () {
                       <Link to='#'>Liquidity</Link>
                     </li>
                     <li>
-                      <Link to='#'>exchange</Link>
+                      <Link id="trade" to='/trade'>exchange</Link>
                     </li>
                   </ul>
                 </div>
@@ -95,9 +93,9 @@ function SideBar () {
                 </Link>
               </li>
               <li>
-                <Link to='#'>
+                <Link to='/collections'>
                   <i className='fa'><img src={farms} alt="staking" /></i>
-                  <span>Staking</span>
+                  <span>Collections</span>
                 </Link>
               </li>
 

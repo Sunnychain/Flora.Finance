@@ -49,7 +49,7 @@ function TxButton ({
     let fromAcct;
 
     // signer is from Polkadot-js browser extension
-    if (isInjected && source) {
+    if (isInjected) {
       const injected = await web3FromSource(source);
       fromAcct = address;
       api.setSigner(injected.signer);
@@ -62,15 +62,11 @@ function TxButton ({
 
   const txResHandler = ({ status }) =>
     status.isFinalized
-      ? setStatus(<div>
-        <h1>'Finalizado Com Sucesso.'</h1>
-        <h2> Hash do Bloco</h2>
-        <p> {status.asFinalized.toString()}</p>
-        </div>)
-      : setStatus(`Status da Transação: ${status.type}`);
+      ? setStatus(`😉 Finalized. Block hash: ${status.asFinalized.toString()}`)
+      : setStatus(`Current transaction status: ${status.type}`);
 
   const txErrHandler = err =>
-    setStatus(<h1>` Erro ao Realizar Transação: ${err.toString()}`</h1>);
+    setStatus(`😞 Transaction Failed: ${err.toString()}`);
 
   const sudoTx = async () => {
     const fromAcct = await getFromAcct();
@@ -147,7 +143,7 @@ function TxButton ({
       setUnsub(null);
     }
 
-    setStatus('Enviando...');
+    setStatus('Sending...');
 
     (isSudo() && sudoTx()) ||
     (isUncheckedSudo() && uncheckedSudoTx()) ||
@@ -250,16 +246,23 @@ function TxGroupButton (props) {
   return (
     <Button.Group>
       <TxButton
-        label='Sem Assinatura'
+        label='Unsigned'
         type='UNSIGNED-TX'
         color='grey'
         {...props}
       />
       <Button.Or />
       <TxButton
-        label='Assinado'
+        label='Signed'
         type='SIGNED-TX'
         color='blue'
+        {...props}
+      />
+      <Button.Or />
+      <TxButton
+        label='SUDO'
+        type='SUDO-TX'
+        color='red'
         {...props}
       />
     </Button.Group>

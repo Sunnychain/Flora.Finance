@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Dropdown, Input, Label } from 'semantic-ui-react';
-import { useSubstrate } from '../substrate-lib/index';
+import { Grid, Form, Dropdown, Input, Label } from 'semantic-ui-react';
+
+import { useSubstrate } from '../substrate-lib';
 import { TxButton, TxGroupButton } from '../substrate-lib/components';
 
 const argIsOptional = (arg) =>
@@ -148,13 +149,13 @@ function Main (props) {
       : 'Leaving this field as blank will submit a NONE value';
 
   return (
-    <div >
-      <h1>Select Transaction Type For Flora.Finance</h1>
-      <Form className="form-control">
+    <Grid.Column width={8}>
+      <h1>Pallet Interactor</h1>
+      <Form>
         <Form.Group style={{ overflowX: 'auto' }} inline>
           <label>Interaction Type</label>
           <Form.Radio
-            label='create order'
+            label='Extrinsic'
             name='interxType'
             value='EXTRINSIC'
             checked={interxType === 'EXTRINSIC'}
@@ -182,7 +183,7 @@ function Main (props) {
             onChange={onInterxTypeChange}
           />
         </Form.Group>
-        <Form.Field >
+        <Form.Field>
           <Dropdown
             placeholder='Pallets / RPC'
             fluid
@@ -194,7 +195,6 @@ function Main (props) {
             value={palletRpc}
             options={palletRPCs}
           />
-
         </Form.Field>
         <Form.Field>
           <Dropdown
@@ -209,7 +209,6 @@ function Main (props) {
             options={callables}
           />
         </Form.Field>
-
         {paramFields.map((paramField, ind) =>
           <Form.Field key={`${paramField.name}-${paramField.type}`}>
             <Input
@@ -218,15 +217,15 @@ function Main (props) {
               type='text'
               label={paramField.name}
               state={{ ind, paramField }}
-              value={inputParams[ind] ? inputParams[ind].value : ''}
+              value={ inputParams[ind] ? inputParams[ind].value : '' }
               onChange={onPalletCallableParamChange}
             />
-            {paramField.optional
+            { paramField.optional
               ? <Label
                 basic
                 pointing
                 color='teal'
-                content={getOptionalMsg(interxType)}
+                content = { getOptionalMsg(interxType) }
               />
               : null
             }
@@ -241,7 +240,7 @@ function Main (props) {
         </Form.Field>
         <div style={{ overflowWrap: 'break-word' }}>{status}</div>
       </Form>
-    </div>
+    </Grid.Column>
   );
 }
 
@@ -249,18 +248,18 @@ function InteractorSubmit (props) {
   const { attrs: { interxType } } = props;
   if (interxType === 'QUERY') {
     return <TxButton
-      label='Query'
-      type='QUERY'
-      color='blue'
+      label = 'Query'
+      type = 'QUERY'
+      color = 'blue'
       {...props}
     />;
   } else if (interxType === 'EXTRINSIC') {
     return <TxGroupButton {...props} />;
   } else if (interxType === 'RPC' || interxType === 'CONSTANT') {
     return <TxButton
-      label='Submit'
-      type={interxType}
-      color='blue'
+      label = 'Submit'
+      type = {interxType}
+      color = 'blue'
       {...props}
     />;
   }

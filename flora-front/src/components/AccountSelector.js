@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
+import './globalStyle.scss';
+import {
+  Button,
+  Dropdown,
+  Icon,
+  Label
+} from 'semantic-ui-react';
 
 import { useSubstrate } from '../substrate-lib';
-import { Menu, Button, Dropdown, Container, Icon, Image, Label } from 'semantic-ui-react';
-import flora from '../images/flora.svg';
 
 function Main (props) {
   const { keyring } = useSubstrate();
@@ -18,8 +23,19 @@ function Main (props) {
     icon: 'user'
   }));
 
+  function test () {
+    const dale = keyring.getPairs();
+    console.log(dale);
+    const mapeado = dale.map((account) => {
+      if (account.meta.name.includes('alice', 'alice_stash', 'bob', 'bob_stash', 'charlie', 'dave', 'eve', 'ferdie')) {
+        console.log(account.meta.name);
+      }
+      console.log(account.meta.name);
+    });
+    console.log(mapeado);
+  }
   const initialAddress =
-  keyringOptions.length > 0 ? keyringOptions[0].value : '';
+    keyringOptions.length > 0 ? keyringOptions[0].value : '';
 
   // Set the initial address
   useEffect(() => {
@@ -34,59 +50,47 @@ function Main (props) {
   };
 
   return (
-    <main>
-      <Menu
-        attached='top'
-        tabular
-        style={{
-          backgroundColor: '#fff',
-          borderColor: '#fff',
-          paddingTop: '1em',
-          paddingBottom: '1em'
-        }}
-      >
-        <Container>
-          <Menu.Menu style={{ alignItems: 'left' }}>
-            <Image src={flora} size='medium' />
-          </Menu.Menu>
-          <Menu.Menu position='right' style={{ alignItems: 'center' }}>
-            {!accountSelected
-              ? <span>
-                Add your account with the{' '}
-                <a
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  href='https://github.com/polkadot-js/extension'
-                >
-                  Polkadot JS Extension
-                </a>
-              </span>
-              : null}
-            <CopyToClipboard text={accountSelected}>
-              <Button
-                basic
-                circular
-                size='large'
-                icon='user'
-                color={accountSelected ? 'green' : 'red'}
-              />
-            </CopyToClipboard>
-            <Dropdown
-              search
-              selection
-              clearable
-              placeholder='Select an account'
-              options={keyringOptions}
-              onChange={(_, dropdown) => {
-                onChange(dropdown.value);
-              }}
-              value={accountSelected}
+
+      <div className="account-Header">
+{
+ test()
+}
+          { !accountSelected
+            ? <span>
+              Connect Account{' '}
+              <a
+                target='_blank'
+                rel='noopener noreferrer'
+                href='https://github.com/polkadot-js/extension'
+              >
+                Polkadot JS Extension
+              </a>
+            </span>
+            : null }
+
+          <CopyToClipboard text={accountSelected} >
+            <Button
+              basic
+              circular
+              size='large'
+              icon='user'
+              color={accountSelected ? 'green' : 'red'}
             />
-            <BalanceAnnotation accountSelected={accountSelected} />
-          </Menu.Menu>
-        </Container>
-      </Menu>
-    </main>
+          </CopyToClipboard>
+          <Dropdown
+            search
+            selection
+            clearable
+            placeholder='Select an account'
+            options={keyringOptions}
+            onChange={(_, dropdown) => {
+              onChange(dropdown.value);
+            }}
+            value={accountSelected}
+          />
+          <BalanceAnnotation accountSelected={accountSelected} />
+          </div>
+
   );
 }
 
@@ -114,9 +118,9 @@ function BalanceAnnotation (props) {
 
   return accountSelected
     ? <Label pointing='left'>
-      <Icon name='money' color='green' />
-      {accountBalance}
-    </Label>
+        <Icon name='money' color='green' />
+        {accountBalance}
+      </Label>
     : null;
 }
 

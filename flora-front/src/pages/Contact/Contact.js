@@ -12,7 +12,6 @@ function Contact () {
                 <Nav.Item as="li">
                     <Nav.Link href="/">Home</Nav.Link>
                 </Nav.Item>
-
             </Nav>
             <main className="mainContact">
                 <Form className="flora_form">

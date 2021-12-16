@@ -31,7 +31,8 @@ pub struct RankToken<AccountId,RankLevel,BoundedString,u64> {
 	name: BoundedString,
 	base_uri: BoundedString,
     num_win:u64,
-    num_loss:u64
+    num_loss:u64,
+	
 }
 
 
@@ -57,6 +58,7 @@ pub mod pallet {
 		pub following_accounts_count: u16,
 		pub following_spaces_count: u16,
 		pub reputation: u32,
+		pub mmr:u64,
 		pub profile: Option<Profile<T>>,
 	}
 
@@ -119,8 +121,8 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn social_account_by_id)]
-	pub(super) type SocialAccountById<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, Option<SocialAccount<T>>,ValueQuery>;
+	pub type SocialAccountById<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, SocialAccount<T>>;
 
 		
 	#[pallet::storage]
@@ -174,7 +176,7 @@ pub mod pallet {
 				content
 			  }
 			);
-			<SocialAccountById<T>>::insert(owner.clone(), Some(social_account));
+			<SocialAccountById<T>>::insert(owner.clone(), social_account);
 	  
 			Self::deposit_event(Event::ProfileCreated(owner));
 			Ok(())
@@ -208,7 +210,7 @@ pub mod pallet {
 				profile.updated = Some(WhoAndWhen::<T>::new(owner.clone()));
 				social_account.profile = Some(profile.clone());
 
-				<SocialAccountById<T>>::insert(owner.clone(), Some(social_account));
+				<SocialAccountById<T>>::insert(owner.clone(), social_account);
 				Self::after_profile_updated(owner.clone(), &profile, old_data);
 
 				Self::deposit_event(Event::ProfileUpdated(owner));
@@ -260,6 +262,7 @@ impl<T: Config> Pallet<T> {
                 following_accounts_count: 0,
                 following_spaces_count: 0,
                 reputation: 1,
+				mmr:1000,
                 profile: None,
             }
         )

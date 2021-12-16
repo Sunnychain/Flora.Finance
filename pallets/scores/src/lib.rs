@@ -1,39 +1,35 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode};
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult},
 	ensure,
-	traits::{Currency, Get, ReservableCurrency},
 	PalletId, BoundedVec,
 };
 
 use sp_runtime::{
-	traits::{AtLeast32BitUnsigned, One, CheckedAdd},
+	
 	RuntimeDebug,
 };
-use sp_std::{convert::TryInto, prelude::*};
+use sp_std::{prelude::*};
 
 
-use pallet_utils::{Pallet as Utils, WhoAndWhen, Content};
 
-use pallet_profile::{Pallet as Profile}
 
 #[derive(Encode, Decode, Clone, Copy, Eq, PartialEq, RuntimeDebug)]
 pub enum ScoringAction {
-	CreateComment=1,
-    ShareComment=2,
-	CreateRoom=3,
-	WinGame=4,
-    WatchGame=5,
-	WatchPayGame=6,
-    FollowAccount=7,
-	AcquireCommomNFT=8,
-	AcquireUncommomNFT=9,
-	AcquireRareNFT=10,
-	AcquireEpicNFT=11,
-	AcquireLendaryNFT=12,
+	CreateToken=1,
+	CreateRoom=2,
+	WinGame=3,
+    WatchGame=4,
+	WatchPayGame=5,
+    FollowAccount=6,
+	AcquireCommomNFT=7,
+	AcquireUncommomNFT=8,
+	AcquireRareNFT=9,
+	AcquireEpicNFT=10,
+	AcquireLendaryNFT=11,
 	
 }
 
@@ -43,11 +39,6 @@ impl Default for ScoringAction {
     }
 }
 
-
-
-
-
-
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -55,12 +46,13 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_profile::Config{
 		
 		 // The overarching event type.
 		 type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		 // Weights of the social actions
+		/* 
 		 type FollowSpaceActionWeight: Get<i16>;
 		 type FollowAccountActionWeight: Get<i16>;
 	 
@@ -72,6 +64,7 @@ pub mod pallet {
 		 type ShareCommentActionWeight: Get<i16>;
 		 type UpvoteCommentActionWeight: Get<i16>;
 		 type DownvoteCommentActionWeight: Get<i16>;
+		 */
 		
 	}
 
@@ -86,7 +79,7 @@ pub mod pallet {
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		AccountReputationChanged(AccountId, ScoringAction, u32),
+		AccountReputationChanged(T::AccountId, ScoringAction, u32),
 	
 	}
 
@@ -113,26 +106,30 @@ pub mod pallet {
 }
 
 
-
-
-
-
 impl<T: Config> Pallet<T> {
 
 	pub fn action_performed(
 		acc: T::AccountId,
-        profile: Profile,
         action: ScoringAction,
-    ) -> u64 {
-		let who = ensure_signed(acc)?;
+    ) -> Result<u32, DispatchError>  {
+
+		let mut social_account = pallet_profile::Pallet::<T>::get_or_new_social_account(acc.clone());
+		
+		
+
+		//add reputation and mmr
+		if action == ScoringAction::WinGame{
+			social_account.mmr+=5;
+
+		};
+		
+		social_account.reputation+=action as u32;
+		pallet_profile::SocialAccountById::<T>::insert(acc.clone(), social_account.clone());
+
+
+		Ok(action as u32)
       
     }
-
-
-
-
-   
-
 
 }
 

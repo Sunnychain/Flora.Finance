@@ -13,7 +13,7 @@ version = '3.0.0-monthly-2021-09+1'
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
-[dev-dependencies.sp-core]
+[dependencies.sp-core]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-09+1'
@@ -72,16 +72,11 @@ version = '4.0.0-dev'
 optional = true
 version = '1.0.124'
 
-[dependencies.orml-nft]
-default-features = false
-git = 'https://github.com/open-web3-stack/open-runtime-module-library.git'
-branch = "master"
-
 
 [dependencies]
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "master", default-features = false }
-primitives = { default-features = false, path = "../../primitives" }
 pallet-utils= { default-features = false, path = "../utils" }
+
+pallet-scores= { default-features = false, path = "../scores" }
 
 
 [features]
@@ -96,10 +91,8 @@ std = [
     "sp-runtime/std",
     'sp-std/std',
     'pallet-balances/std',
-    "orml-traits/std",
-	"orml-nft/std",
     "sp-core/std",
     'pallet-utils/std',
-    
+        
 ]
 try-runtime = ['frame-support/try-runtime']

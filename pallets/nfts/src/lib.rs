@@ -5,17 +5,22 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult},
 	ensure,
-	traits::{Currency, Get, ReservableCurrency},
+	traits::{Currency, Get, ReservableCurrency,Randomness},
 	PalletId, BoundedVec,
 };
-use primitives::{TokenId, TokenIndex};
-use sp_runtime::{RuntimeDebug, traits::{AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, One}};
+
+use frame_support::log;
+
+use sp_runtime::{RuntimeDebug, traits::{AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, One,Zero}};
 use sp_std::{convert::TryInto, prelude::*};
 
 use pallet_utils;
 
+use pallet_scores;
+
 pub use pallet::*;
 
+use sp_core::H256;
 
 pub type CollectionId = u64;
 
@@ -23,32 +28,36 @@ type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen)]
-pub struct Token<AccountId,CollectionId,NFTStatus,BoundedString> {
-	owner: AccountId,
-	land_owner:AccountId,
-	collection:CollectionId,
-	status:NFTStatus,
-	tree_name:BoundedString,
-	tree_description:BoundedString,
-	forest_type_flag:BoundedString,
-	land_owner_contract:BoundedString,
-	land_owner_insurance_contract:BoundedString,
-	gps_land_coordiates:BoundedString,
-	name: BoundedString,
-	symbol: BoundedString,
-	base_uri: BoundedString,
-	total_trees:u32,
-	co2_offset_per_year:u32,
+pub struct Token<AccountId,NonFungibleTokenId,NftType,CollectionId,NFTStatus,BoundedString> {
+	pub	owner: AccountId,
+	pub token_id:NonFungibleTokenId,
+	pub land_owner:AccountId,
+	pub nft_type: NftType,
+	pub collection:CollectionId,
+	pub status:NFTStatus,
+	pub tree_name:BoundedString,
+	pub tree_description:BoundedString,
+	pub forest_type_flag:BoundedString,
+	pub land_owner_contract:BoundedString,
+	pub land_owner_insurance_contract:BoundedString,
+	pub gps_land_coordiates:BoundedString,
+	pub name: BoundedString,
+	pub symbol: BoundedString,
+	pub base_uri: BoundedString,
+	pub total_trees:u32,
+	pub co2_offset_per_year:u32,
+	
 }
 
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen)]
-pub struct GameToken<AccountId,BoundedString> {
+pub struct GameToken<AccountId> {
 	owner: AccountId,
-	mana_cost:u32,
-	defensive_stats:u32,
-	offensive_stats:u32,
-	description:BoundedString,
+	mana_cost:u8,
+	stats:u8,
+	effect:u8,
+	rarity:u8,
+	eval:u32,
 }
 
 
@@ -65,16 +74,16 @@ pub enum NFTStatus {
 
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum NftType {
-	CarbonCommon,
-	CarbonUncommom,
-	CarbonRare,
-	CarbonEpic,
-	CarbonLendary,
-	CarbonZeroCommon,
-	CarbonZeroUncommom,
-	CarbonZeroRare,
-	CarbonZeroEpic,
-	CarbonZeroLendary,
+	CarbonCommon=0,
+	CarbonUncommom=1,
+	CarbonRare=2,
+	CarbonEpic=3,
+	CarbonLendary=4,
+	CarbonZeroCommon=5,
+	CarbonZeroUncommom=6,
+	CarbonZeroRare=7,
+	CarbonZeroEpic=8,
+	CarbonZeroLendary=9,
 }
 
 /// Collection info
@@ -82,8 +91,6 @@ pub enum NftType {
 pub struct Collection<AccountId> {
 	/// Class owner
 	pub owner: AccountId,
-	// The type of nft
-	pub nft_type: NftType,
 	/// The account of nft
 	pub nft_account: AccountId,
 	/// Metadata from ipfs
@@ -99,13 +106,15 @@ pub mod pallet {
 	use sp_runtime::traits::AccountIdConversion;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_scores::pallet::Config{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type PalletId: Get<PalletId>;
 
 		/// Identifier for the class of token.
 		type NonFungibleTokenId: Member  + Parameter + AtLeast32BitUnsigned + Default + Copy + MaxEncodedLen;
+
+		type Randomness: Randomness<H256,u32>;
 
 		/// The maximum length of base uri stored on-chain.
 		#[pallet::constant]
@@ -137,8 +146,8 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	pub(super) type Tokens<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::NonFungibleTokenId, Token<T::AccountId, CollectionId,NFTStatus,BoundedVec<u8, T::StringLimit>>>;
+	pub type Tokens<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::NonFungibleTokenId, Token<T::AccountId, T::NonFungibleTokenId,NftType,CollectionId,NFTStatus,BoundedVec<u8, T::StringLimit>>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn next_token_id)]
@@ -154,9 +163,14 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub (super) type GameTokens<T: Config> =
-		StorageDoubleMap<_, Blake2_128Concat, T::NonFungibleTokenId,
-		Blake2_128Concat, TokenId,
-		GameToken<T::AccountId,BoundedVec<u8, T::StringLimit>>>;
+		StorageMap<_, Blake2_128Concat, T::NonFungibleTokenId,
+		GameToken<T::AccountId>>;
+
+
+	#[pallet::storage]
+	#[pallet::getter(fn owner_of)]
+	pub type Owners<T: Config> =
+		StorageMap<_, Blake2_128Concat,  T::NonFungibleTokenId, T::AccountId>;
 
 
 	/// The NftMaster Account similar to treasury vault
@@ -166,112 +180,23 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub type IsLocked<T: Config> =
-		StorageDoubleMap<_, Blake2_128Concat, T::NonFungibleTokenId,
-		Blake2_128Concat, TokenId,
-		u32,ValueQuery>;
+		StorageMap<_, Blake2_128Concat, T::NonFungibleTokenId,u32,ValueQuery>;
+
+	// The Nonce storage item.
+    #[pallet::storage]
+    #[pallet::getter(fn get_nonce)]
+    pub type Nonce<T: Config> = StorageValue<_, u64, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn owner_of)]
-	pub type Owners<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::NonFungibleTokenId,
-		Blake2_128Concat,
-		TokenId,
-		T::AccountId,
-		ValueQuery,
-	>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn balance_of)]
-	pub(super) type Balances<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::NonFungibleTokenId,
-		Blake2_128Concat,
-		T::AccountId,
-		u32,
-		ValueQuery,
-	>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn get_approved)]
-	pub(super) type TokenApprovals<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::NonFungibleTokenId,
-		Blake2_128Concat,
-		TokenId,
-		T::AccountId,
-		ValueQuery,
-	>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn is_approved_for_all)]
-	pub(super) type OperatorApprovals<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::NonFungibleTokenId,
-		Blake2_128Concat,
-		// (owner, operator)
-		(T::AccountId, T::AccountId),
-		bool,
-		ValueQuery,
-	>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn total_supply)]
-	pub(super) type TotalSupply<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::NonFungibleTokenId, u32, ValueQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn token_by_index)]
-	pub(super) type AllTokens<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::NonFungibleTokenId,
-		Blake2_128Concat,
-		TokenIndex,
-		TokenId,
-		ValueQuery,
-	>;
-
-	#[pallet::storage]
-	pub(super) type AllTokensIndex<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::NonFungibleTokenId,
-		Blake2_128Concat,
-		TokenId,
-		TokenIndex,
-		ValueQuery,
-	>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn token_of_owner_by_index)]
-	pub(super) type OwnedTokens<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::NonFungibleTokenId,
-		Blake2_128Concat,
-		(T::AccountId, TokenIndex),
-		TokenId,
-		ValueQuery,
-	>;
-
-	#[pallet::storage]
-	pub(super) type OwnedTokensIndex<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::NonFungibleTokenId,
-		Blake2_128Concat,
-		TokenId,
-		TokenIndex,
-		ValueQuery,
-	>;
+	#[pallet::getter(fn get_owned_tokens)]
+	pub type OwnedTokens<T: Config> =
+		StorageDoubleMap<_, 
+		Blake2_128Concat, T::AccountId,
+		Blake2_128Concat, T::NonFungibleTokenId,
+		Token<T::AccountId,T::NonFungibleTokenId,NftType,CollectionId,NFTStatus,BoundedVec<u8, T::StringLimit>>>;
 
 
-
+	
 
     #[pallet::genesis_config]
     pub struct GenesisConfig<T:Config>{
@@ -297,25 +222,10 @@ pub mod pallet {
 		
 			let col_id = Pallet::<T>::do_create_collection(
 				&treasury_acc.clone(), 
-				NftType::CarbonCommon,
 	 			&treasury_acc.clone(), 
 				"flora.finance/collections".into()
 			).unwrap();
-			Pallet::<T>::do_create_token(&treasury_acc.clone(),
-				&treasury_acc.clone(),
-				col_id,  
-				"Eucalipto".into(),
-				"o eucaplito é uma arvore que lixa o planeta".into(),
-				"PT-1337".into(),
-				"contracto_do_senhor_manel.pt".into(),
-				"contracto_do_senhor_manel.pt/insurance".into(),
-				"41.194204,-8.6286117".into(),
-				"first token".into(), "first token".into(), "first token".into(),
-				2500,
-				20
-		
-			);
-				
+							
 			
         }
         
@@ -327,13 +237,13 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		TokenCreated(T::NonFungibleTokenId, T::AccountId),
-		Transfer(T::NonFungibleTokenId, T::AccountId, T::AccountId, TokenId),
-		Approval(T::NonFungibleTokenId, T::AccountId, T::AccountId, TokenId),
+		Transfer(T::NonFungibleTokenId, T::AccountId, T::AccountId),
+		Approval(T::NonFungibleTokenId, T::AccountId, T::AccountId),
 		ApprovalForAll(T::NonFungibleTokenId, T::AccountId, T::AccountId, bool),
 		CollectionCreated(CollectionId, T::AccountId),
 		CollectionDestroyed(CollectionId, T::AccountId),
-		GameTokenCreated(T::AccountId,T::NonFungibleTokenId,TokenId),
-		GameTokenBurnt(T::AccountId,T::NonFungibleTokenId,TokenId),
+		GameTokenCreated(T::AccountId,T::NonFungibleTokenId),
+		GameTokenBurnt(T::AccountId,T::NonFungibleTokenId),
 	}
 
 	#[pallet::error]
@@ -368,14 +278,12 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn create_collection(
 			origin: OriginFor<T>,
-			nft_type: NftType,
-
 			nft_account: T::AccountId,
 			metadata: Vec<u8>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			Self::do_create_collection(&who, nft_type, &nft_account, metadata)?;
+			Self::do_create_collection(&who,  &nft_account, metadata)?;
 			
 			Ok(().into())
 		}
@@ -397,6 +305,7 @@ pub mod pallet {
 		pub fn create_token(
 			origin: OriginFor<T>,
 			land_owner:T::AccountId,
+			nft_type:NftType,
 			collection:CollectionId,
 			tree_name: Vec<u8>,
 			tree_description: Vec<u8>,
@@ -412,68 +321,14 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			Self::do_create_token(&who, &land_owner,collection,tree_name,tree_description,forest_type_flag,
+			Self::do_create_token(&who, &land_owner,nft_type,collection,tree_name,tree_description,forest_type_flag,
 				land_owner_contract,land_owner_insurance_contract,gps_coordinates,name, symbol,
 			    base_uri,total_trees,co2_offset)?;
 
 			Ok(())
 		}
 
-		#[pallet::weight(10_000)]
-		pub fn approve(
-			origin: OriginFor<T>,
-			id: T::NonFungibleTokenId,
-			to: T::AccountId,
-			token_id: TokenId,
-		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-
-			let owner = Self::owner_of(id, token_id);
-			ensure!(
-				owner != T::AccountId::default(),
-				Error::<T>::TokenNonExistent
-			);
-	
-			ensure!(to != owner, Error::<T>::ApproveToCurrentOwner);
-			ensure!(
-				who == owner || Self::is_approved_for_all(id, (&owner, &who)),
-				Error::<T>::NotOwnerOrApproved
-			);
-	
-			TokenApprovals::<T>::insert(id, token_id, &to);
-	
-			Self::deposit_event(Event::Approval(
-				id,
-				owner,
-				to,
-				token_id,
-			));
-
-			Ok(())
-		}
-
-		#[pallet::weight(10_000)]
-		pub fn set_approve_for_all(
-			origin: OriginFor<T>,
-			id: T::NonFungibleTokenId,
-			operator: T::AccountId,
-			approved: bool,
-		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-
-			ensure!(operator != who, Error::<T>::ApproveToCaller);
-
-			OperatorApprovals::<T>::insert(id, (&who, &operator), approved);
-	
-			Self::deposit_event(Event::ApprovalForAll(
-				id,
-				who,
-				operator,
-				approved,
-			));
-
-			Ok(())
-		}
+		
 
 		#[pallet::weight(10_000)]
 		pub fn transfer_from(
@@ -481,36 +336,21 @@ pub mod pallet {
 			id: T::NonFungibleTokenId,
 			from: T::AccountId,
 			to: T::AccountId,
-			token_id: TokenId,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
+
 			ensure!(
-				Self::is_approved_or_owner(id, &who, token_id),
+				Self::owner_of(id)==Some(who),
 				Error::<T>::NotOwnerOrApproved
 			);
 
-			Self::do_transfer_from(id, &from, &to, token_id)?;
+			Self::do_transfer_from(id, &from, &to)?;
 
 			Ok(())
 		}
 
-		#[pallet::weight(10_000)]
-		pub fn mint(
-			origin: OriginFor<T>,
-			id: T::NonFungibleTokenId,
-			to: T::AccountId,
-			token_id: TokenId,
-		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-
-			ensure!(Self::has_permission(id, &who), Error::<T>::NoPermission);
-
-			Self::do_mint(id, &to, token_id)?;
-
-			Ok(())
-		}
-
+		/*
 		#[pallet::weight(10_000)]
 		pub fn mint_batch(
 			origin: OriginFor<T>,
@@ -526,17 +366,16 @@ pub mod pallet {
 			Self::do_mint_batch(id, &to,num_of_token)?;
 
 			Ok(())
-		}
+		}*/
 
 		#[pallet::weight(10_000)]
 		pub fn burn(
 			origin: OriginFor<T>,
 			id: T::NonFungibleTokenId,
-			token_id: TokenId,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			Self::do_burn(id, &who, token_id)?;
+			Self::do_burn(id, &who)?;
 
 			Ok(())
 		}
@@ -545,11 +384,11 @@ pub mod pallet {
 		pub fn burn_game_token(
 			origin: OriginFor<T>,
 			id: T::NonFungibleTokenId,
-			token_id: TokenId,
+			
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			Self::do_burn_game_token(id, &who, token_id)?;
+			Self::do_burn_game_token(id, &who)?;
 
 			Ok(())
 		}
@@ -558,13 +397,23 @@ pub mod pallet {
 		pub fn mint_game_token(
 			origin: OriginFor<T>,
 			id: T::NonFungibleTokenId,
-			token_id: TokenId,
+			
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
+			Tokens::<T>::try_mutate_exists(id,|token|->DispatchResult{
+
+				let mut aux=token.as_mut().ok_or(Error::<T>::TokenNonExistent)?;
+
+				Self::do_mint_game_token(who, id,aux.nft_type)?;
+
+				Ok(())
+
+			});
+
 					
 
-			Self::do_mint_game_token(who, id, token_id)?;
+			
 
 			Ok(())
 		}
@@ -574,16 +423,11 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	/// Returns the `AccountId` of the treasury account.
 	pub fn treasury_account() -> T::AccountId {
-			AccountIdConversion::into_account(&T::PalletId::get())
-	}
-
-	pub fn exists(id: T::NonFungibleTokenId, token_id: TokenId) -> bool {
-		Owners::<T>::contains_key(id, token_id)
+			AccountIdConversion::into_account(&<T as pallet::Config>::PalletId::get())
 	}
 
 	pub fn do_create_collection(
 		who: &T::AccountId,
-		nft_type: NftType,
 		nft_account: &T::AccountId,
 		metadata: Vec<u8>,
 	) -> Result<CollectionId, DispatchError> {
@@ -597,11 +441,10 @@ impl<T: Config> Pallet<T> {
 			})?;
 
 		let deposit = T::CreateCollectionDeposit::get();
-		T::Currency::reserve(who, deposit.clone())?;
+		<T as pallet::Config>::Currency::reserve(who, deposit.clone())?;
 
 		let collection = Collection {
 			owner: who.clone(),
-			nft_type,
 			nft_account: nft_account.clone(),
 			metadata,
 		};
@@ -622,7 +465,7 @@ impl<T: Config> Pallet<T> {
 			ensure!(c.owner == *who, Error::<T>::NoPermission);
 
 			let deposit = T::CreateCollectionDeposit::get();
-			T::Currency::unreserve(who, deposit);
+			<T as pallet::Config>::Currency::unreserve(who, deposit);
 
 			Self::deposit_event(Event::CollectionDestroyed(collection_id, who.clone()));
 
@@ -633,6 +476,7 @@ impl<T: Config> Pallet<T> {
 	pub fn do_create_token(
 		who: &T::AccountId,
 		land_owner:&T::AccountId,
+		nft_type:NftType,
 		collection:CollectionId,
 		tree_name: Vec<u8>,
 		tree_description: Vec<u8>,
@@ -647,7 +491,7 @@ impl<T: Config> Pallet<T> {
 		co2_offset:u32,
 	) -> Result<T::NonFungibleTokenId, DispatchError> {
 		let deposit = T::CreateTokenDeposit::get();
-		T::Currency::reserve(&who, deposit.clone())?;
+		<T as pallet::Config>::Currency::reserve(&who, deposit.clone())?;
 
 		let bounded_name: BoundedVec<u8, T::StringLimit> =
 			name.clone().try_into().map_err(|_| Error::<T>::BadMetadata)?;
@@ -674,7 +518,7 @@ impl<T: Config> Pallet<T> {
 		let bounded_gps: BoundedVec<u8, T::StringLimit> =
 			gps_coordinates.clone().try_into().map_err(|_| Error::<T>::BadMetadata)?;
 
-		
+		ensure!(Collections::<T>::contains_key(collection),Error::<T>::InvalidId);
 
 		let id = NextTokenId::<T>::try_mutate(|id| -> Result<T::NonFungibleTokenId, DispatchError> {
 			let current_id = *id;
@@ -685,6 +529,7 @@ impl<T: Config> Pallet<T> {
 		let token = Token {
 			owner: who.clone(),
 			land_owner: land_owner.clone(),
+			nft_type:nft_type,
 			collection:collection.clone(),
 			status:NFTStatus::AprovedNonAudited,
 			tree_name:bounded_tree_name,
@@ -697,16 +542,23 @@ impl<T: Config> Pallet<T> {
 			symbol: bounded_symbol,
 			base_uri: bounded_base_uri,
 			total_trees:total_trees,
-			co2_offset_per_year:co2_offset
+			co2_offset_per_year:co2_offset,
+			token_id:id.clone()
 		};
 
 		
 		
 		
-		Tokens::<T>::insert(id, token);
+		Tokens::<T>::insert(id.clone(), token.clone());
+		OwnedTokens::<T>::insert(who.clone(),id.clone(),token.clone());
+		Owners::<T>::insert(id.clone(),who.clone());
+		IsLocked::<T>::insert(id.clone(),0);
 
 		
+		pallet_scores::pallet::Pallet::<T>::action_performed(who.clone(),pallet_scores::ScoringAction::CreateToken);
 
+		
+		
 		Self::deposit_event(Event::TokenCreated(id, who.clone()));
 
 		Ok(id)
@@ -716,85 +568,55 @@ impl<T: Config> Pallet<T> {
 		id: T::NonFungibleTokenId,
 		from: &T::AccountId,
 		to: &T::AccountId,
-		token_id: TokenId,
+		
 	) -> DispatchResult {
-		let owner = Self::owner_of(id, token_id);
-		ensure!(
+
+		Tokens::<T>::try_mutate_exists(id, |token|->DispatchResult{
+			let tok = token.as_mut().ok_or(Error::<T>::InvalidId)?;
+
+			let owner = Self::owner_of(id).ok_or(Error::<T>::TokenNonExistent).unwrap();
+			ensure!(
 			owner != T::AccountId::default(),
 			Error::<T>::TokenNonExistent
 		);
 
-		ensure!(IsLocked::<T>::get(id,token_id)==0,Error::<T>::LockedAsset);
+		ensure!(tok.owner==owner,Error::<T>::NoPermission);
+		ensure!(IsLocked::<T>::get(id)==0,Error::<T>::LockedAsset);
+
 
 		ensure!(owner == *from, Error::<T>::NotTokenOwner);
 
-		let balance_from = Self::balance_of(id, from);
-		let balance_to = Self::balance_of(id, to);
+		
 
-		let new_balance_from = match balance_from.checked_sub(1) {
-			Some(c) => c,
-			None => return Err(Error::<T>::Underflow.into()),
-		};
+		
+		
+		tok.owner=to.clone();
+		Owners::<T>::insert(id.clone(),  to.clone());
 
-		let new_balance_to = match balance_to.checked_add(1) {
-			Some(c) => c,
-			None => return Err(Error::<T>::Overflow.into()),
-		};
+		Owners::<T>::try_mutate(id,|own|-> DispatchResult{
+			*own = Some(to.clone());
+			Ok(())
+		});
 
-		Self::remove_token_from_owner_enumeration(id, from, token_id)?;
-		Self::add_token_to_owner_enumeration(id, to, token_id)?;
-
-		Self::clear_approval(id, token_id)?;
-
-		Balances::<T>::insert(id, from, new_balance_from);
-		Balances::<T>::insert(id, to, new_balance_to);
-		Owners::<T>::insert(id, token_id, to);
+		OwnedTokens::<T>::remove(owner.clone(),id.clone());
+		
+		OwnedTokens::<T>::insert(to.clone(),id.clone(),tok.clone());
 
 		Self::deposit_event(Event::Transfer(
 			id.clone(),
 			from.clone(),
 			to.clone(),
-			token_id,
 		));
 
 		Ok(())
+
+
+		})
+
+		
 	}
 
-	pub fn do_mint(
-		id: T::NonFungibleTokenId,
-		to: &T::AccountId,
-		token_id: TokenId,
-	) -> DispatchResult {
-		ensure!(
-			!Self::exists(id, token_id),
-			Error::<T>::TokenAlreadyMinted
-		);
-
-		let balance = Self::balance_of(id, to);
-
-		let new_balance = match balance.checked_add(One::one()) {
-			Some(c) => c,
-			None => return Err(Error::<T>::Overflow.into()),
-		};
-
-		Self::add_token_to_all_tokens_enumeration(id, token_id)?;
-		Self::add_token_to_owner_enumeration(id, to, token_id)?;
-
-		Balances::<T>::insert(id, to, new_balance);
-		Owners::<T>::insert(id, token_id, to);
-
-		IsLocked::<T>::insert(id,token_id,0);
-
-		Self::deposit_event(Event::Transfer(
-			id.clone(),
-			T::AccountId::default(),
-			to.clone(),
-			token_id,
-		));
-
-		Ok(())
-	}
-
+/*
 	pub fn do_mint_batch(
 		id: T::NonFungibleTokenId,
 		to: &T::AccountId,
@@ -814,52 +636,38 @@ impl<T: Config> Pallet<T> {
 
 		Ok(())
 	}
-
+*/
 	pub fn do_mint_game_token(
 		who:T::AccountId,
 		id: T::NonFungibleTokenId,
-		token_id: TokenId,
+		nft_type: NftType
+		
 	) -> DispatchResult {
-		ensure!(
-			Self::exists(id, token_id),
-			Error::<T>::TokenNonExistent
-		);
-
-		let owner = Self::owner_of(id, token_id);
+		let owner = Self::owner_of(id).ok_or(Error::<T>::TokenNonExistent).unwrap();
+		
 		ensure!(who.clone()==owner,Error::<T>::NoPermission);
 
-		ensure!(IsLocked::<T>::get(id,token_id)==0,Error::<T>::LockedAsset);
+		ensure!(IsLocked::<T>::get(id)==0,Error::<T>::LockedAsset);
 
 		//Lock nft
-		IsLocked::<T>::try_mutate(id,token_id, |lock_flag|->DispatchResult{
+		IsLocked::<T>::try_mutate(id, |lock_flag|->DispatchResult{
 				
 			*lock_flag=lock_flag.checked_add(1).ok_or(Error::<T>::Overflow)?;
 			Ok(())
 
 		})?;
 
-		let description : Vec<u8>="+1 cartas adjacentes".into();
-
-
-		let bounded_description:  BoundedVec<u8, T::StringLimit> =
-		description.try_into().map_err(|_| Error::<T>::BadMetadata)?;
-
-		let game_token = GameToken{
-			owner: who.clone(),
-			mana_cost:3,
-			defensive_stats:2,
-			offensive_stats:1,
-			description: bounded_description
-		};
+	
+		let game_token = Self::generate_game_token(owner.clone(),id.clone(),nft_type);
 
 	
-		GameTokens::<T>::insert(id,token_id,game_token);
+		GameTokens::<T>::insert(id,game_token);
 		
 
 		Self::deposit_event(Event::GameTokenCreated(
 			who,
 			id,
-			token_id,
+			
 		));
 
 		Ok(())
@@ -868,26 +676,22 @@ impl<T: Config> Pallet<T> {
 	pub fn do_burn_game_token(
 		id: T::NonFungibleTokenId,
 		account: &T::AccountId,
-		token_id: TokenId,
+		
 	) -> DispatchResult {
-		let owner = Self::owner_of(id, token_id);
-		ensure!(
-			owner != T::AccountId::default(),
-			Error::<T>::TokenNonExistent
-		);
+		let owner = Self::owner_of(id).ok_or(Error::<T>::TokenNonExistent).unwrap();
 		ensure!(*account == owner, Error::<T>::NotTokenOwner);
 
-		ensure!(GameTokens::<T>::contains_key(id, token_id),Error::<T>::TokenNonExistent);
+		ensure!(GameTokens::<T>::contains_key(id),Error::<T>::TokenNonExistent);
 
-		GameTokens::<T>::remove(id, token_id);
+		GameTokens::<T>::remove(id);
 
-		Self::unlock_nft(id, token_id);
+		ensure!(Self::unlock_nft(id)==Ok(()),Error::<T>::Overflow);
 		
 
 		Self::deposit_event(Event::GameTokenBurnt(
-			who,
+			owner,
 			id,
-			token_id,
+			
 		));
 
 		Ok(())
@@ -899,157 +703,49 @@ impl<T: Config> Pallet<T> {
 	pub fn do_burn(
 		id: T::NonFungibleTokenId,
 		account: &T::AccountId,
-		token_id: TokenId,
+		
 	) -> DispatchResult {
-		let owner = Self::owner_of(id, token_id);
-		ensure!(
+		Tokens::<T>::try_mutate_exists(id, |token|->DispatchResult{
+			let tok = token.take().ok_or(Error::<T>::InvalidId)?;
+
+			let owner = Self::owner_of(id).ok_or(Error::<T>::TokenNonExistent).unwrap();
+			ensure!(
 			owner != T::AccountId::default(),
 			Error::<T>::TokenNonExistent
 		);
-		ensure!(*account == owner, Error::<T>::NotTokenOwner);
 
-		let balance = Self::balance_of(id, &owner);
+		ensure!(tok.owner==owner,Error::<T>::NoPermission);
+		ensure!(IsLocked::<T>::get(id)==0,Error::<T>::LockedAsset);
 
-		let new_balance = match balance.checked_sub(One::one()) {
-			Some(c) => c,
-			None => return Err(Error::<T>::Underflow.into()),
-		};
 
-		Self::remove_token_from_all_tokens_enumeration(id, token_id)?;
-		Self::remove_token_from_owner_enumeration(id, &owner, token_id)?;
+				
 
-		Self::clear_approval(id, token_id)?;
+		Owners::<T>::remove(id);
+		OwnedTokens::<T>::remove(owner.clone(),id);
+		
 
-		Balances::<T>::insert(id, &owner, new_balance);
-		Owners::<T>::remove(id, token_id);
-
-		Self::deposit_event(Event::Transfer(
-			id.clone(),
-			owner.clone(),
-			T::AccountId::default(),
-			token_id,
+		Self::deposit_event(Event::GameTokenBurnt(
+			owner,
+			id,
+			
 		));
 
 		Ok(())
+
+
+		})
 	}
 
-	fn is_approved_or_owner(
+	
+
+	pub fn lock_nft(
 		id: T::NonFungibleTokenId,
-		spender: &T::AccountId,
-		token_id: TokenId,
-	) -> bool {
-		let owner = Self::owner_of(id, token_id);
-
-		*spender == owner
-			|| Self::get_approved(id, token_id) == *spender
-			|| Self::is_approved_for_all(id, (&owner, spender))
-	}
-
-	fn has_permission(id: T::NonFungibleTokenId, who: &T::AccountId) -> bool {
-		let token = Tokens::<T>::get(id).unwrap();
-		*who == token.owner
-	}
-
-	fn clear_approval(id: T::NonFungibleTokenId, token_id: TokenId) -> DispatchResult {
-		TokenApprovals::<T>::remove(id, token_id);
-		Ok(())
-	}
-
-	fn add_token_to_owner_enumeration(
-		id: T::NonFungibleTokenId,
-		to: &T::AccountId,
-		token_id: TokenId,
-	) -> DispatchResult {
-		let new_token_index = Self::balance_of(id, to);
-
-		OwnedTokensIndex::<T>::insert(id, token_id, new_token_index);
-		OwnedTokens::<T>::insert(id, (to, new_token_index), token_id);
-
-		Ok(())
-	}
-
-	fn add_token_to_all_tokens_enumeration(
-		id: T::NonFungibleTokenId,
-		token_id: TokenId,
-	) -> DispatchResult {
-		TotalSupply::<T>::try_mutate(id, |total_supply| -> DispatchResult {
-			let new_token_index = *total_supply;
-			*total_supply = total_supply
-				.checked_add(One::one())
-				.ok_or(Error::<T>::Overflow)?;
-
-			AllTokensIndex::<T>::insert(id, token_id, new_token_index);
-			AllTokens::<T>::insert(id, new_token_index, token_id);
-
-			Ok(())
-		})?;
-
-		Ok(())
-	}
-
-	fn remove_token_from_owner_enumeration(
-		id: T::NonFungibleTokenId,
-		from: &T::AccountId,
-		token_id: TokenId,
-	) -> DispatchResult {
-		let balance_of_from = Self::balance_of(id, from);
-
-		let last_token_index = match balance_of_from.checked_sub(One::one()) {
-			Some(c) => c,
-			None => return Err(Error::<T>::Overflow.into()),
-		};
-
-		let token_index = OwnedTokensIndex::<T>::get(id, token_id);
-
-		if token_index != last_token_index {
-			let last_token_id = OwnedTokens::<T>::get(id, (from, last_token_index));
-			OwnedTokens::<T>::insert(id, (from, token_index), last_token_id);
-			OwnedTokensIndex::<T>::insert(id, last_token_id, token_index);
-		}
-
-		OwnedTokensIndex::<T>::remove(id, token_id);
-		OwnedTokens::<T>::remove(id, (from, last_token_index));
-
-		Ok(())
-	}
-
-	fn remove_token_from_all_tokens_enumeration(
-		id: T::NonFungibleTokenId,
-		token_id: TokenId,
-	) -> DispatchResult {
-		let total_supply = Self::total_supply(id);
-
-		let new_total_supply = match total_supply.checked_sub(One::one()) {
-			Some(c) => c,
-			None => return Err(Error::<T>::Overflow.into()),
-		};
-
-		let last_token_index = new_total_supply;
-
-		let token_index = AllTokensIndex::<T>::get(id, token_id);
-
-		let last_token_id = AllTokens::<T>::get(id, last_token_index);
-
-		AllTokens::<T>::insert(id, token_index, last_token_id);
-		AllTokensIndex::<T>::insert(id, last_token_id, token_index);
-
-		AllTokens::<T>::remove(id, last_token_index);
-		AllTokensIndex::<T>::remove(id, token_id);
-
-		TotalSupply::<T>::insert(id, new_total_supply);
-
-		Ok(())
-	}
-
-
-	fn lock_nft(
-		id: T::NonFungibleTokenId,
-		token_id: TokenId,
+		
 	) -> DispatchResult {
 		//Lock nft
-		IsLocked::<T>::try_mutate(id,token_id, |lock_flag|->DispatchResult{
+		IsLocked::<T>::try_mutate(id, |lock_flag|->DispatchResult{
 			
-			ensure!(lock_flag == 0,Error::<T>::LockedAsset);
+			ensure!(*lock_flag == 0,Error::<T>::LockedAsset);
 
 			*lock_flag=lock_flag.checked_add(1).ok_or(Error::<T>::Overflow)?;
 			Ok(())
@@ -1058,14 +754,14 @@ impl<T: Config> Pallet<T> {
 			
 	}
 
-	fn unlock_nft(
+	pub fn unlock_nft(
 		id: T::NonFungibleTokenId,
-		token_id: TokenId,
+		
 	) -> DispatchResult {
 		//unLock nft
-		IsLocked::<T>::try_mutate(id,token_id, |lock_flag|->DispatchResult{
+		IsLocked::<T>::try_mutate(id, |lock_flag|->DispatchResult{
 			
-			ensure!(lock_flag == 1,Error::<T>::LockedAsset);
+			ensure!(*lock_flag == 1,Error::<T>::LockedAsset);
 
 			*lock_flag=lock_flag.checked_sub(1).ok_or(Error::<T>::Overflow)?;
 			Ok(())
@@ -1074,5 +770,108 @@ impl<T: Config> Pallet<T> {
 			
 	}
 
+	fn generate_game_token(
+		owner:T::AccountId,
+		id: T::NonFungibleTokenId,
+		nft_type: NftType,
+		)->GameToken<T::AccountId>{
+
+			let mut rarity=0u8;
+
+			let mut upper_bound=800u32;
+			
+			
+			if nft_type == NftType::CarbonZeroUncommom || nft_type == NftType::CarbonUncommom{
+				rarity=1;
+				upper_bound = 1_300;
+
+			}
+
+			if nft_type == NftType::CarbonRare || nft_type == NftType::CarbonZeroRare{
+				rarity=2;
+				upper_bound = 1_800;
+
+			}
+			if nft_type == NftType::CarbonEpic || nft_type == NftType::CarbonZeroEpic{
+				rarity=3;
+				upper_bound = 2_300;
+
+			}
+
+			if nft_type == NftType::CarbonLendary || nft_type == NftType::CarbonZeroLendary{
+				rarity=4;
+				upper_bound = 2_800;
+
+			}
+
+			let mut aux_cost= 0u8;
+			let mut aux_value=0u8;
+			let mut aux_effect=0u8;
+
+			let lower_bound= upper_bound-500;
+
+			
+
+			
+			while !(Self::reward_func(aux_cost,aux_value,aux_effect)<upper_bound && Self::reward_func(aux_cost,aux_value,aux_effect)>lower_bound) {
+
+				let rand= Self::generate_random();
+
+				aux_cost = Self::scale_in_between(1,7,rand[10]);
+				aux_value = Self::scale_in_between(1,7,rand[20]);
+				aux_effect = Self::scale_in_between(1,33,rand[30]);
+
+				log::info!("test cost {:?}", rand[10]);
+				log::info!("test value {:?}", aux_value);
+				log::info!("test effect {:?}", aux_effect);
+				log::info!("reward{:?}", Self::reward_func(aux_cost,aux_value,aux_effect));
+
+				
+
+			};
+			
+
+
+			let game_token = GameToken{
+				owner: owner.clone(),
+				mana_cost:aux_cost,
+				stats:aux_value,
+				effect:aux_effect,
+				rarity:rarity,
+				eval:Self::reward_func(aux_cost,aux_value,aux_effect),
+			};
+	
+
+			game_token
+
+		}
+
+		fn reward_func(cost:u8,value:u8,effect:u8)->u32{
+
+			(value as u32*1_000/(cost as u32+1)) + (effect as u32*1_000/(effect as u32+1))
+			
+		}
+
+		fn generate_random()->H256{
+
+			let nonce = Self::get_and_increment_nonce();
+            let randomValue = T::Randomness::random(&nonce);
+			log::info!("random  {:?}",randomValue.0);
+			randomValue.0
+		}
+	
+
+		fn get_and_increment_nonce() -> Vec<u8> {
+			let nonce = <Nonce<T>>::get();
+			<Nonce<T>>::put(nonce.wrapping_add(1));
+			nonce.encode()
+		}
+
+		fn scale_in_between(a:u8,b:u8,val:u8)-> u8 {
+			/*
+			(((b as u32-a as u32)*((val as u32*1000)/255)+a as u32*1000)/1000)*/
+
+			(((b as u32-a as u32)*((val as u32*1000)/255)+a as u32*1000)/1000).try_into().unwrap()
+		}
 
 }

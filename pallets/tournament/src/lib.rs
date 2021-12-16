@@ -8,7 +8,7 @@ use frame_support::{
 	traits::{Currency, Get, ReservableCurrency},
 	PalletId, BoundedVec,
 };
-use primitives::{TokenId, TokenIndex};
+use primitives::{ TokenIndex};
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, One, CheckedAdd},
 	RuntimeDebug,

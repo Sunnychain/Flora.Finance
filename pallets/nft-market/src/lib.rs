@@ -6,51 +6,42 @@ use frame_support::{
 	ensure,
 	traits::{Currency, Get, ReservableCurrency,ExistenceRequirement::KeepAlive},
 };
-use primitives::{Balance, TokenId};
-use pallet_nft;
+
 
 use sp_runtime::{traits::{One,AtLeast32BitUnsigned}, RuntimeDebug};
 use sp_std::prelude::*;
 
 pub use pallet::*;
-// Tests disabled
+
+use pallet_nft;
+
 type BalanceOf<T> =
 	<<T as pallet_nft::Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 
-
-pub type SalesId = u64;
-
-type CollectionId = pallet_nft::CollectionId;
-
-
-
-
-
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
-pub struct Sale<AccountId,CollectionId,NonFungibleTokenId,TokenId,BalanceOf>{
+pub struct Sale<AccountId,NonFungibleTokenId,BalanceOf,BoundedString>{
 	//Product Owner
 	pub owner:AccountId,
-	//Collection Index
-	pub collection:CollectionId,
+	
 	//NFT Index
 	pub nft_id:NonFungibleTokenId,
-	//Token Index
-	pub token_id: TokenId,
 	//Product Price
 	pub price : BalanceOf,
+
+	pub tree_name:BoundedString,
+	pub tree_description:BoundedString,
 
 }
 
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
-pub struct Auction<AccountId,NonFungibleTokenId,TokenId,BalanceOf,BlockNumber>{
+pub struct Auction<AccountId,NonFungibleTokenId,BalanceOf,BlockNumber>{
 	//Product Owner
 	pub owner:AccountId,
 	//NFT Index
 	pub nft_id:NonFungibleTokenId,
-	//Token Index
-	pub token_id: TokenId,
+
 	//Product Price
 	pub current_price : BalanceOf,
 	//Number of bids
@@ -64,15 +55,13 @@ pub struct Auction<AccountId,NonFungibleTokenId,TokenId,BalanceOf,BlockNumber>{
 
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, RuntimeDebug)]
-pub struct Bid<AccountId,CollectionId,NonFungibleTokenId,TokenId,BalanceOf>{
+pub struct Bid<AccountId,NonFungibleTokenId,BalanceOf>{
 	//Bidder
 	pub bidder:AccountId,
-	//Collection Index
-	pub collection:CollectionId,
+	
 	//NFT Index
 	pub nft_id:NonFungibleTokenId,
-	//Token Index
-	pub token_id: TokenId,
+	
 	//Offer Amount
 	pub offer : BalanceOf,
 
@@ -103,35 +92,34 @@ pub mod pallet {
 	
 	#[pallet::storage]
 	pub(super) type SalesInfo<T: Config> =
-		StorageDoubleMap<_, 
+		StorageMap<_, 
 		Blake2_128Concat, T::NonFungibleTokenId,
-		Blake2_128Concat, TokenId,
-		Sale<T::AccountId,CollectionId,T::NonFungibleTokenId,TokenId,BalanceOf<T>>>;
+		Sale<T::AccountId,T::NonFungibleTokenId,BalanceOf<T>,BoundedVec<u8,T::StringLimit>>>;
 
 	#[pallet::storage]
 		pub(super) type AuctionsInfo<T: Config> =
-			StorageDoubleMap<_, 
+			StorageMap<_, 
 			Blake2_128Concat, T::NonFungibleTokenId,
-			Blake2_128Concat, TokenId,
-			Auction<T::AccountId,T::NonFungibleTokenId,TokenId,BalanceOf<T>,T::BlockNumber>>;
+			Auction<T::AccountId,T::NonFungibleTokenId,BalanceOf<T>,T::BlockNumber>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn auction_end_time)]
 	/// Index auctions by end time.
 	pub type AuctionEndTime<T: Config> =
-	StorageDoubleMap<_,
-	Blake2_128Concat, T::BlockNumber,
-	Blake2_128Concat, T::NonFungibleTokenId,
-	TokenId, 
-	OptionQuery>;
+		StorageDoubleMap<_,
+		Blake2_128Concat, 
+		T::BlockNumber,
+		Blake2_128Concat, 
+		T::NonFungibleTokenId,
+		()
+		>;
 
 
 		#[pallet::storage]
 		pub(super) type Offers<T: Config> =
-			StorageDoubleMap<_, 
+			StorageMap<_, 
 			Blake2_128Concat, T::NonFungibleTokenId,
-			Blake2_128Concat, TokenId,
-			Bid<T::AccountId,CollectionId,T::NonFungibleTokenId,TokenId,BalanceOf<T>>>;
+			Bid<T::AccountId,T::NonFungibleTokenId,BalanceOf<T>>>;
 	
 
 
@@ -139,13 +127,13 @@ pub mod pallet {
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		SalesAdded(T::AccountId,T::NonFungibleTokenId,TokenId),
-		SalesRemoved(T::AccountId,T::NonFungibleTokenId,TokenId),
-		SalesUpdated(T::AccountId,T::NonFungibleTokenId,TokenId),
-		OfferMade(T::AccountId,T::NonFungibleTokenId,TokenId,BalanceOf<T>),
-		OfferAccepted(T::AccountId,T::AccountId,T::NonFungibleTokenId,TokenId,BalanceOf<T>),
-		AuctionCreated(T::AccountId,T::NonFungibleTokenId,TokenId,T::BlockNumber,BalanceOf<T>),
-		BiddedInAuction(T::AccountId,T::NonFungibleTokenId,TokenId,BalanceOf<T>),
+		SalesAdded(T::AccountId,T::NonFungibleTokenId),
+		SalesRemoved(T::AccountId,T::NonFungibleTokenId),
+		SalesUpdated(T::AccountId,T::NonFungibleTokenId),
+		OfferMade(T::AccountId,T::NonFungibleTokenId,BalanceOf<T>),
+		OfferAccepted(T::AccountId,T::AccountId,T::NonFungibleTokenId,BalanceOf<T>),
+		AuctionCreated(T::AccountId,T::NonFungibleTokenId,T::BlockNumber,BalanceOf<T>),
+		BiddedInAuction(T::AccountId,T::NonFungibleTokenId,BalanceOf<T>),
 
 	}
 
@@ -183,13 +171,11 @@ pub mod pallet {
 		pub fn add_sale(
 			origin: OriginFor<T>,
 			non_fungible_id : T::NonFungibleTokenId,
-			collection_id: CollectionId,
-			token_id: TokenId,
 			price: BalanceOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			Self::do_add_sale(&who,non_fungible_id,collection_id, token_id, price)?;
+			Self::do_add_sale(&who,non_fungible_id, price)?;
 
 			
 
@@ -200,12 +186,10 @@ pub mod pallet {
 		pub fn remove_sale(
 			origin: OriginFor<T>,
 			non_fungible_id : T::NonFungibleTokenId,
-			collection_id: CollectionId,
-			token_id: TokenId,
-		) -> DispatchResult {
+			) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			Self::do_remove_sale(&who, non_fungible_id, token_id)?;
+			Self::do_remove_sale(&who, non_fungible_id)?;
 
 			Ok(().into())
 		}
@@ -214,12 +198,11 @@ pub mod pallet {
 		pub fn update_price(
 			origin: OriginFor<T>,
 			nft_id: T::NonFungibleTokenId,
-			token_id: TokenId,
 			price: BalanceOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			Self::do_update_price(&who, nft_id, token_id, price)?;
+			Self::do_update_price(&who, nft_id, price)?;
 
 			Ok(().into())
 		}
@@ -227,14 +210,12 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn offer(
 			origin: OriginFor<T>,
-			collection_id: CollectionId,
 			nft_id: T::NonFungibleTokenId,
-			token_id: TokenId,
 			offer: BalanceOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			Self::do_offer(&who, collection_id,nft_id, token_id,offer)?;
+			Self::do_offer(&who,nft_id,offer)?;
 
 			Ok(().into())
 		}
@@ -242,45 +223,29 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn bid_auction(
 			origin: OriginFor<T>,
-			collection_id: CollectionId,
 			nft_id: T::NonFungibleTokenId,
-			token_id: TokenId,
 			offer: BalanceOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			Self::do_bid_auction(&who,nft_id, token_id,offer)?;
+			Self::do_bid_auction(&who,nft_id, offer)?;
 
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
-		pub fn accept_offer(
-			origin: OriginFor<T>,
-			collection_id: CollectionId,
-			nft_id: T::NonFungibleTokenId,
-			token_id: TokenId,
-		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-
-			Self::do_accept_offer(&who, nft_id,collection_id, token_id)?;
-
-			Ok(().into())
-		}
-
+		
 
 		#[pallet::weight(10_000)]
 		pub fn create_auction(
 			origin: OriginFor<T>,
 			non_fungible_id : T::NonFungibleTokenId,
-			token_id: TokenId,
 			minimum_price: BalanceOf<T>,
 			auction_end_block:T::BlockNumber
 		) -> DispatchResult {
 			
 			let who = ensure_signed(origin)?;
 
-			Self::do_create_auction(&who,non_fungible_id,token_id, minimum_price,auction_end_block)?;
+			Self::do_create_auction(&who,non_fungible_id, minimum_price,auction_end_block)?;
 
 
 			Ok(())
@@ -292,19 +257,14 @@ pub mod pallet {
 
 impl<T: Config> Pallet<T> {
 	fn conclude_auction(now: T::BlockNumber)->DispatchResult {
-		for (non_fungible_id, token_id) in <AuctionEndTime<T>>::drain_prefix(&now) {
+		for (non_fungible_id,_) in <AuctionEndTime<T>>::drain_prefix(&now) {
 			
 		
 			//unlock nft
-			pallet_nft::IsLocked::<T>::try_mutate(non_fungible_id,token_id, |lock_flag|->DispatchResult{
-				
-				*lock_flag=lock_flag.checked_sub(1).ok_or(Error::<T>::NumOverflow)?;
-				
-				Ok(())
-			})?;
+			pallet_nft::Pallet::<T>::unlock_nft(non_fungible_id);
 
 			
-			AuctionsInfo::<T>::try_mutate_exists(non_fungible_id, token_id, |auction|->DispatchResult{
+			AuctionsInfo::<T>::try_mutate_exists(non_fungible_id,  |auction|->DispatchResult{
 			//Ensure auction exists and remove it from listing
 					
 				let auction_info = auction.take().ok_or(Error::<T>::ListingNotFound)?;
@@ -312,11 +272,11 @@ impl<T: Config> Pallet<T> {
 				//verificar se existe um vencedor 
 				if auction_info.last_bidder!=auction_info.owner && auction_info.num_bid>0 {
 					//unreserve last bidder currency
-					T::Currency::unreserve(&auction_info.last_bidder,auction_info.current_price);
+					<T as pallet_nft::Config>::Currency::unreserve(&auction_info.last_bidder,auction_info.current_price);
 					//Transfer currency to nft owner
-					T::Currency::transfer(&auction_info.last_bidder,&auction_info.owner,auction_info.current_price,KeepAlive)?;
+					<T as pallet_nft::Config>::Currency::transfer(&auction_info.last_bidder,&auction_info.owner,auction_info.current_price,KeepAlive)?;
 					//transfer nft to bidder
-					pallet_nft::Pallet::<T>::do_transfer_from(non_fungible_id, &auction_info.owner, &auction_info.last_bidder, token_id)?;
+					pallet_nft::Pallet::<T>::do_transfer_from(non_fungible_id, &auction_info.owner, &auction_info.last_bidder)?;
 
 				};
 
@@ -337,52 +297,51 @@ impl<T: Config> Pallet<T> {
 	pub fn do_add_sale(
 		who: &T::AccountId,
 		non_fungible_id : T::NonFungibleTokenId,
-		collection_id: CollectionId,
-		token_id: TokenId,
 		price: BalanceOf<T>,
 
 	) -> DispatchResult {
 
-		//ensure collection exists
-		ensure!(pallet_nft::Collections::<T>::contains_key(collection_id),pallet_nft::Error::<T>::CollectionNotFound);
-
+		
 		//ensure origin is owner of token
-		ensure!(pallet_nft::Owners::<T>::get(non_fungible_id,token_id)==who.clone(),Error::<T>::NoPermission);
+		ensure!(pallet_nft::Owners::<T>::get(non_fungible_id)==Some(who.clone()),Error::<T>::NoPermission);
 
-		//ensure token is not locked
-		ensure!(pallet_nft::IsLocked::<T>::get(non_fungible_id,token_id)==0,Error::<T>::AssetIsLocked);
+		
 			
+			let token_cp=pallet_nft::Tokens::<T>::get(non_fungible_id).ok_or(Error::<T>::ListingNotFound)?.clone();
+
+			//ensure token is not locked
+			ensure!(pallet_nft::IsLocked::<T>::get(non_fungible_id)==0,Error::<T>::AssetIsLocked);
+				
 			let sale = Sale {
 				owner: who.clone(),
-				collection:collection_id,
 				nft_id:non_fungible_id,
-				token_id:token_id,
-				price:price
-			};
+				price:price,
+				tree_name: token_cp.tree_name.clone(),
+				tree_description: token_cp.tree_description.clone()
+			};		
+			
 
 			//Lock nft
-			pallet_nft::IsLocked::<T>::try_mutate(non_fungible_id,token_id, |lock_flag|->DispatchResult{
+			pallet_nft::Pallet::<T>::lock_nft(non_fungible_id);
+
+			
+			SalesInfo::<T>::insert(non_fungible_id, sale);
+			Self::deposit_event(Event::SalesAdded(who.clone(),non_fungible_id));
 				
-				*lock_flag=lock_flag.checked_add(1).ok_or(Error::<T>::NumOverflow)?;
-				Ok(())
+			Ok(())
 
-			})?;
 
-			
-			SalesInfo::<T>::insert(non_fungible_id,token_id, sale);
-			Self::deposit_event(Event::SalesAdded(who.clone(),non_fungible_id,token_id));
-			
-		Ok(())
+		
 	}
 
 	pub fn do_remove_sale(
 		who: &T::AccountId,
 		non_fungible_id: T::NonFungibleTokenId,
-		token_id: TokenId
+		
 		
 	) -> DispatchResult {
 		
-		SalesInfo::<T>::try_mutate_exists(non_fungible_id,token_id, |sale| -> DispatchResult {
+		SalesInfo::<T>::try_mutate_exists(non_fungible_id, |sale| -> DispatchResult {
 
 			//ensure sale exists
 			let sales_info = sale.take().ok_or(Error::<T>::ListingNotFound)?;
@@ -391,19 +350,14 @@ impl<T: Config> Pallet<T> {
 			ensure!(sales_info.owner == *who, Error::<T>::NoPermission);
 
 			//ensure token is locked
-			ensure!(pallet_nft::IsLocked::<T>::get(sales_info.nft_id,sales_info.token_id)==1,Error::<T>::AssetIsLocked);
+			ensure!(pallet_nft::IsLocked::<T>::get(sales_info.nft_id)==1,Error::<T>::AssetIsLocked);
 			//remove listing
-			SalesInfo::<T>::remove(non_fungible_id, token_id);
+			SalesInfo::<T>::remove(non_fungible_id);
 
 			//unlock nft
-			pallet_nft::IsLocked::<T>::try_mutate(non_fungible_id,token_id, |lock_flag|->DispatchResult{
-				
-				*lock_flag=lock_flag.checked_sub(1).ok_or(Error::<T>::NumOverflow)?;
-				Ok(())
+			pallet_nft::Pallet::<T>::unlock_nft(non_fungible_id);
 
-			})?;
-
-			Self::deposit_event(Event::SalesRemoved(who.clone(),non_fungible_id,token_id));
+			Self::deposit_event(Event::SalesRemoved(who.clone(),non_fungible_id));
 
 
 			Ok(())
@@ -415,10 +369,9 @@ impl<T: Config> Pallet<T> {
 	pub fn do_update_price(
 		who: &T::AccountId,
 		non_fungible_id: T::NonFungibleTokenId,
-		token_id: TokenId,
 		new_price: BalanceOf<T>,
 	) -> DispatchResult {
-		SalesInfo::<T>::try_mutate_exists(non_fungible_id,token_id, |sale| -> DispatchResult {
+		SalesInfo::<T>::try_mutate_exists(non_fungible_id,|sale| -> DispatchResult {
 
 			//ensure sale exists
 			let sales_info = sale.as_mut().ok_or(Error::<T>::ListingNotFound)?;
@@ -430,7 +383,7 @@ impl<T: Config> Pallet<T> {
 			sales_info.price=new_price;
 
 			
-			Self::deposit_event(Event::SalesRemoved(who.clone(),non_fungible_id,token_id));
+			Self::deposit_event(Event::SalesRemoved(who.clone(),non_fungible_id));
 
 			Ok(())
 		})
@@ -440,16 +393,15 @@ impl<T: Config> Pallet<T> {
 	pub fn do_create_auction(
 		who: &T::AccountId,
 		non_fungible_id: T::NonFungibleTokenId,
-		token_id: TokenId,
 		minimum_price: BalanceOf<T>,
 		auction_end_block:T::BlockNumber
 	) -> DispatchResult {
 
 		//ensure origin is owner of token
-		ensure!(pallet_nft::Owners::<T>::get(non_fungible_id,token_id)==who.clone(),Error::<T>::NoPermission);
+		ensure!(pallet_nft::Owners::<T>::get(non_fungible_id)==Some(who.clone()),Error::<T>::NoPermission);
 
 		//ensure token is not locked
-		ensure!(pallet_nft::IsLocked::<T>::get(non_fungible_id,token_id)==0,Error::<T>::AssetIsLocked);
+		ensure!(pallet_nft::IsLocked::<T>::get(non_fungible_id)==0,Error::<T>::AssetIsLocked);
 
 
 		//Ensure duration is greater than minimun
@@ -458,7 +410,6 @@ impl<T: Config> Pallet<T> {
 		let auction = Auction {
 				owner: who.clone(),
 				nft_id:non_fungible_id,
-				token_id:token_id,
 				current_price:minimum_price,
 				num_bid : 0u64.into(),
 				last_bidder : who.clone(), // Converter para nulo
@@ -466,14 +417,14 @@ impl<T: Config> Pallet<T> {
 			};
 
 			
-			pallet_nft::IsLocked::<T>::try_mutate(non_fungible_id,token_id, |lock_flag|->DispatchResult{
+			pallet_nft::IsLocked::<T>::try_mutate(non_fungible_id, |lock_flag|->DispatchResult{
 				
 				*lock_flag=lock_flag.checked_add(1).ok_or(Error::<T>::NumOverflow)?;
 				
 				
-				AuctionsInfo::<T>::insert(non_fungible_id,token_id, auction);
-				AuctionEndTime::<T>::insert(auction_end_block,non_fungible_id,token_id);
-				Self::deposit_event(Event::AuctionCreated(who.clone(),non_fungible_id,token_id,auction_end_block,minimum_price));
+				AuctionsInfo::<T>::insert(non_fungible_id, auction);
+				AuctionEndTime::<T>::insert(auction_end_block,non_fungible_id,());
+				Self::deposit_event(Event::AuctionCreated(who.clone(),non_fungible_id,auction_end_block,minimum_price));
 				Ok(())
 
 			})
@@ -484,12 +435,10 @@ impl<T: Config> Pallet<T> {
 	}
 	pub fn do_offer(
 		 who: &T::AccountId,
-		 collection:CollectionId,
 		 non_fungible_id: T::NonFungibleTokenId,
-		 token_id: TokenId,
 		 offer: BalanceOf<T>
 	) -> DispatchResult {
-		SalesInfo::<T>::try_mutate_exists(non_fungible_id,token_id, |sale| -> DispatchResult {
+		SalesInfo::<T>::try_mutate_exists(non_fungible_id, |sale| -> DispatchResult {
 
 			//ensure sale exists and remove from SalesInfo
 			let sales_info = sale.take().ok_or(Error::<T>::ListingNotFound)?;
@@ -501,24 +450,19 @@ impl<T: Config> Pallet<T> {
 			ensure!(offer.clone()>=sales_info.price,Error::<T>::OfferTooLow);
 
 			//transfer currency from bidder to origin
-			T::Currency::transfer(who,&sales_info.owner,offer,KeepAlive)?;
+			<T as pallet_nft::Config>::Currency::transfer(who,&sales_info.owner,offer,KeepAlive)?;
 
 				
 			//unlock nft
-			pallet_nft::IsLocked::<T>::try_mutate(non_fungible_id,token_id, |lock_flag|->DispatchResult{
+			pallet_nft::Pallet::<T>::unlock_nft(non_fungible_id);
 			
-			*lock_flag=lock_flag.checked_sub(1).ok_or(Error::<T>::NumOverflow)?;
-			
-			//send nft to bidder
-			pallet_nft::Pallet::<T>::do_transfer_from(non_fungible_id,&sales_info.owner , who, token_id)?;
 
-			Self::deposit_event(Event::OfferAccepted(sales_info.owner,who.clone(),non_fungible_id,token_id,offer));
+			//send nft to bidder
+			ensure!(pallet_nft::Pallet::<T>::do_transfer_from(non_fungible_id,&sales_info.owner , who)==Ok(()),Error::<T>::InvalidQuantity);
+
+			Self::deposit_event(Event::OfferAccepted(sales_info.owner,who.clone(),non_fungible_id,offer));
 			
 			Ok(())
-
-		})
-
-			
 		
 		
 		})
@@ -529,10 +473,9 @@ impl<T: Config> Pallet<T> {
 	pub fn do_bid_auction(
 		who: &T::AccountId,
 		non_fungible_id: T::NonFungibleTokenId,
-		token_id: TokenId,
 		offer: BalanceOf<T>
    ) -> DispatchResult {
-	   AuctionsInfo::<T>::try_mutate_exists(non_fungible_id,token_id, |auction| -> DispatchResult {
+	   AuctionsInfo::<T>::try_mutate_exists(non_fungible_id, |auction| -> DispatchResult {
 
 		   //ensure auction exists
 		   let auction_info = auction.as_mut().ok_or(Error::<T>::ListingNotFound)?;
@@ -546,12 +489,12 @@ impl<T: Config> Pallet<T> {
 		   
 			if auction_info.last_bidder!=auction_info.owner && auction_info.num_bid > 0 {
 				//unreserve last bidder currency
-				T::Currency::unreserve(&auction_info.last_bidder,auction_info.current_price);
+				<T as pallet_nft::Config>::Currency::unreserve(&auction_info.last_bidder,auction_info.current_price);
 				
 				
 			};
 			//reserve new bidder currency
-			T::Currency::reserve(who, offer)?;
+			<T as pallet_nft::Config>::Currency::reserve(who, offer)?;
 			//update bid in storage
 			//update price
 			auction_info.current_price=offer;
@@ -561,58 +504,12 @@ impl<T: Config> Pallet<T> {
 			auction_info.last_bidder = who.clone();
 
 			  
-		 Self::deposit_event(Event::BiddedInAuction(who.clone(),non_fungible_id,token_id,offer));
+		 Self::deposit_event(Event::BiddedInAuction(who.clone(),non_fungible_id,offer));
 		 Ok(())
 	   })
 			   
    }
 
-	pub fn do_accept_offer(
-		who: &T::AccountId,
-		non_fungible_id: T::NonFungibleTokenId,
-		collection_id: CollectionId,
-		token_id: TokenId,
-	) -> DispatchResult {
-		SalesInfo::<T>::try_mutate(non_fungible_id,token_id, |sale| -> DispatchResult {
-
-			//ensure sale exists and remove from SalesInfo
-			let sales_info = sale.take().ok_or(Error::<T>::ListingNotFound)?;
-
-			//ensure origin is sales owner
-			ensure!(sales_info.owner==*who,Error::<T>::NoPermission);
-
-
-			Offers::<T>::try_mutate(non_fungible_id,token_id,|bid|-> DispatchResult{
-				//remove bid
-				let cur_bid=bid.take().ok_or(Error::<T>::ListingNotFound)?;
-
-				//unreserve bidder currency
-				T::Currency::unreserve(&cur_bid.bidder.clone(), cur_bid.offer.clone());
-
-				//transfer currency from bidder to origin
-				T::Currency::transfer(&cur_bid.bidder,who,cur_bid.offer,KeepAlive)?;
-
-				
-				//unlock nft
-				pallet_nft::IsLocked::<T>::try_mutate(non_fungible_id,token_id, |lock_flag|->DispatchResult{
-				
-				*lock_flag=lock_flag.checked_sub(1).ok_or(Error::<T>::NumOverflow)?;
-				Ok(())
-
-				})?;
-
-				//send nft to bidder
-				pallet_nft::Pallet::<T>::do_transfer_from(non_fungible_id, who, &cur_bid.bidder, token_id)?;
-
-				Self::deposit_event(Event::OfferAccepted(who.clone(),cur_bid.bidder,non_fungible_id,token_id,cur_bid.offer));
-
-				Ok(())
-			})
-
-				
-		
-	})
-}
 
 
 }

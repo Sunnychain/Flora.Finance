@@ -56,8 +56,6 @@ pub type BlockId = generic::BlockId<Block>;
 /// Signed version of Balance
 pub type Amount = i128;
 
-/// Token ID
-pub type TokenId = u64;
 
 /// Index of token created
 pub type TokenIndex = u32;

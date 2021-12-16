@@ -321,5 +321,6 @@ std = [
     'pallet-nft-market/std',
     'simple-crowdfund/std',
     'pallet-profile/std',
+    "pallet-scores/std",
         
 ]

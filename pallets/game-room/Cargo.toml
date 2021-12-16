@@ -75,6 +75,7 @@ version = '1.0.124'
 
 
 [dependencies]
+pallet-scores= { default-features = false, path = "../scores" }
 
 
 [features]

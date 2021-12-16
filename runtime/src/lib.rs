@@ -56,6 +56,8 @@ pub use sp_runtime::{Perbill, Permill};
 /// Import the template pallet.
 pub use pallet_template;
 
+use pallet_scores::pallet::Pallet;
+
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -105,7 +107,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 /// up by `pallet_aura` to implement `fn slot_duration()`.
 ///
 /// Change this to adjust the block time.
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 2000;
 
 // NOTE: Currently it is not possible to change the slot duration after the chain has started.
 //       Attempting to do so will brick block production.
@@ -315,6 +317,7 @@ impl pallet_nft::Config for Runtime {
 	type CarbonZeroRareId = CarbonZeroRareId  ;
 	type CarbonZeroEpicId =  CarbonZeroEpicId ;
 	type CarbonZeroLegendaryId =  CarbonZeroLegendaryId ;
+	type Randomness = RandomnessCollectiveFlip;
 	
 }
 
@@ -349,6 +352,12 @@ impl pallet_profile::Config  for Runtime {
 	
 }
 
+impl pallet_scores::pallet::Config  for Runtime {
+	type Event = Event;
+	
+	
+}
+
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -370,6 +379,7 @@ construct_runtime!(
 		CrowdFund: simple_crowdfund::{Pallet, Call, Storage, Event<T>},
 		UtilsModule: pallet_utils::{Pallet,Config<T>,Storage,Event<T>},
 		Profile: pallet_profile::{Pallet,Call,Storage,Event<T>},
+		Scores : pallet_scores::pallet::{Pallet,Call,Storage,Event<T>},
 	}
 );
 

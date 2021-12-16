@@ -10,6 +10,8 @@ use frame_support::{
 use sp_runtime::{RuntimeDebug, traits::{AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, One}};
 use sp_std::{convert::TryInto, prelude::*};
 pub use pallet::*;
+
+use pallet_scores;
 // Tests disabled
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen)]
@@ -36,12 +38,14 @@ type BalanceOf<T> =
 
 #[frame_support::pallet]
 	pub mod pallet {
+	
+
 		use super::*;
 		use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
 		use frame_system::pallet_prelude::*;
 
 		#[pallet::config]
-		pub trait Config: frame_system::Config {
+		pub trait Config: frame_system::Config + pallet_scores::pallet::Config {
 			type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 			/// Identifier for the class of token.
@@ -83,6 +87,11 @@ type BalanceOf<T> =
 		pub enum Error<T> {
 			NoAvailableGameRoomIndex,
 			BadMetadata,
+			GameNotFound,
+			InvalidPassword,
+			BrokenGameState,
+			InvalidUpdateGameState,
+
 		
 		}
 
@@ -94,13 +103,38 @@ type BalanceOf<T> =
 			#[pallet::weight(10_000)]
 			pub fn create_game(
 				origin: OriginFor<T>,
-				player_1:T::AccountId,
-				player_2:T::AccountId,
-				connect:Vec<u8>,
+				password:Vec<u8>,
 			) -> DispatchResult {
 				let who = ensure_signed(origin)?;
 
-				Self::do_create_game(&who, player_1, player_2, connect)?;
+				Self::do_create_game(&who,password)?;
+				
+				Ok(().into())
+			}
+
+			#[pallet::weight(10_000)]
+			pub fn update_game_status(
+				origin: OriginFor<T>,
+				game_id:T::GameRoomIndex,
+				game_state: GameState,
+				password: Vec<u8>,
+			) -> DispatchResult {
+				let who = ensure_signed(origin)?;
+
+				Self::do_update_game(&who,game_id,game_state,password)?;
+				
+				Ok(().into())
+			}
+
+			#[pallet::weight(10_000)]
+			pub fn join_game(
+				origin: OriginFor<T>,
+				game_id:T::GameRoomIndex,
+				password: Vec<u8>,
+			) -> DispatchResult {
+				let who = ensure_signed(origin)?;
+
+				Self::do_join_game(&who,game_id,password)?;
 				
 				Ok(().into())
 			}
@@ -117,9 +151,7 @@ type BalanceOf<T> =
 		impl<T: Config> Pallet<T> {
 			pub fn do_create_game(
 				who: &T::AccountId,
-				player_1:  T::AccountId,
-				player_2: T::AccountId,
-				connect: Vec<u8>,
+				password: Vec<u8>,
 			) -> Result<T::GameRoomIndex, DispatchError> {
 					let game_id =
 						NextGameRoomId::<T>::try_mutate(|id| -> Result<T::GameRoomIndex, DispatchError> {
@@ -130,32 +162,85 @@ type BalanceOf<T> =
 							Ok(current_id)
 						})?;
 
+
+					let connect : Vec<u8>="flora.finance/games/game-room/".into();
 					let bounded_connect:  BoundedVec<u8, T::StringLimit> =
-					connect.clone().try_into().map_err(|_| Error::<T>::BadMetadata)?;
-
-					let test_net_password : Vec<u8>="testnet_password".into();
-
+					connect.try_into().map_err(|_| Error::<T>::BadMetadata)?;
 
 					let bounded_password: BoundedVec<u8, T::StringLimit> =
-					test_net_password.try_into().map_err(|_| Error::<T>::BadMetadata)?;
+					password.try_into().map_err(|_| Error::<T>::BadMetadata)?;
 
 					
 					let game = GameRoom {
-						player_1:player_1,
-						player_2:player_2,
+						player_1:who.clone(),
+						player_2:who.clone(),
 						game_state : GameState::WaitingConnections,
 						connection: bounded_connect,
 						room_password:bounded_password,
 					};
 
-				
+					pallet_scores::pallet::Pallet::<T>::action_performed(who.clone(),pallet_scores::ScoringAction::CreateRoom)?;
 					Games::<T>::insert(game_id.clone(), game);
 
 					Self::deposit_event(Event::GameCreated(game_id, who.clone()));
 					Ok(game_id)
 				} 
+
+			pub fn do_update_game(
+				who: &T::AccountId,
+				game_id:T::GameRoomIndex,
+				game_state:GameState,
+				password: Vec<u8>,
+			) ->  Result<T::GameRoomIndex, DispatchError>  {
+				Games::<T>::try_mutate_exists(game_id,|game|->Result<T::GameRoomIndex, DispatchError> {
+					let game_mut=game.as_mut().ok_or(Error::<T>::GameNotFound)?;
+					ensure!(game_mut.room_password==password,Error::<T>::InvalidPassword);
+					ensure!((game_mut.game_state.clone() as u32) < (game_state.clone() as u32),Error::<T>::InvalidUpdateGameState);
+					//ensure root acesss????????
+					match game_state{
+						GameState::FinishedPlayer1Wins=>pallet_scores::pallet::Pallet::<T>::action_performed(game_mut.player_1.clone(),pallet_scores::ScoringAction::WinGame).unwrap(),
+						GameState::FinishedPlayer2wins=>pallet_scores::pallet::Pallet::<T>::action_performed(game_mut.player_2.clone(),pallet_scores::ScoringAction::WinGame).unwrap(),
+						GameState::WaitingConnections =>  0,
+						GameState::OnGoing=> 0 ,
+						GameState::FinishedDraw => 0,
+					};
+					
+					game_mut.game_state=game_state;			
+
+					Ok(game_id)
+				})
+
+				
+				} 
+			
+			
+			
+	
+			pub fn do_join_game(
+				who: &T::AccountId,
+				game_id:T::GameRoomIndex,
+				password:Vec<u8>,
+			) -> Result<T::GameRoomIndex, DispatchError>  {
+
+				Games::<T>::try_mutate_exists(game_id,|game|->Result<T::GameRoomIndex, DispatchError> {
+					let game_mut=game.as_mut().ok_or(Error::<T>::GameNotFound)?;
+					ensure!(game_mut.player_1==game_mut.player_2,Error::<T>::BrokenGameState);
+					ensure!(game_mut.room_password==password,Error::<T>::InvalidPassword);
+					ensure!(game_mut.game_state==GameState::WaitingConnections,Error::<T>::BrokenGameState);
+					
+					//ensure root acesss????????		
+					game_mut.game_state=GameState::OnGoing;
+					game_mut.player_2=who.clone();			
+
+					Ok(game_id)
+				})
+			} 
+			
+				
+			}
 			
 
-			}
+		}
 
-}
+		
+
